@@ -1,0 +1,7 @@
+# Optional dependencies that require additional setup
+# Install Rust first: https://rustup.rs/
+# Then run: pip install -r requirements-optional.txt
+
+# Validation (requires Rust to compile pydantic-core)
+pydantic==2.5.3
+pydantic-settings==2.1.0
