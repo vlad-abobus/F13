@@ -6,6 +6,7 @@ import { z } from 'zod'
 import apiClient from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import SimpleCaptcha from '../components/SimpleCaptcha'
+import { Button, Input } from '../components/ui'
 
 const loginSchema = z.object({
   username: z.string().min(1, 'Username is required'),
@@ -49,58 +50,65 @@ export default function Login() {
 
   return (
     <div className="max-w-md mx-auto mt-8">
-      <h1 className="text-3xl font-bold mb-6">Вхід</h1>
+      <div className="mb-8 text-center">
+        <h1 className="text-4xl font-bold mb-2 text-white">
+          Вход
+        </h1>
+        <p className="text-gray-400">Добро пожаловать обратно!</p>
+      </div>
 
       {error && (
-        <div className="bg-red-900 text-white p-4 mb-4 border-2 border-white">
+        <div className="bg-red-900/50 border border-red-500 text-white p-4 mb-6 rounded-xl">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label className="block mb-2">Username</label>
-          <input
+      <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 rounded-2xl p-6 shadow-xl">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <Input
             {...register('username')}
-            className="w-full px-4 py-2 bg-black border-2 border-white text-white"
+            label="Имя пользователя"
             type="text"
+            placeholder="Имя пользователя"
+            error={errors.username?.message}
           />
-          {errors.username && (
-            <p className="text-red-500 mt-1">{errors.username.message}</p>
-          )}
-        </div>
 
-        <div>
-          <label className="block mb-2">Password</label>
-          <input
+          <Input
             {...register('password')}
-            className="w-full px-4 py-2 bg-black border-2 border-white text-white"
+            label="Пароль"
             type="password"
+            placeholder="Пароль"
+            error={errors.password?.message}
           />
-          {errors.password && (
-            <p className="text-red-500 mt-1">{errors.password.message}</p>
-          )}
-        </div>
 
-        <SimpleCaptcha
-          onSolution={(solution, questionId) => {
-            setCaptchaChallenge(questionId)
-            setCaptchaSolution(solution)
-          }}
-          onError={(error) => {
-            setError(error)
-            setCaptchaSolution('')
-          }}
-        />
+          <div className="bg-gray-800/30 p-4 rounded-xl border border-gray-700">
+            <label className="block mb-3 text-sm font-semibold text-gray-300">
+              🔒 CAPTCHA (защита от ботов)
+            </label>
+            <SimpleCaptcha
+              onSolution={(solution, questionId) => {
+                setCaptchaChallenge(questionId)
+                setCaptchaSolution(solution)
+              }}
+              onError={(error) => {
+                setError(error)
+                setCaptchaSolution('')
+              }}
+            />
+          </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting || !captchaSolution}
-          className="w-full px-4 py-2 bg-white text-black font-bold hover:bg-gray-200 disabled:opacity-50"
-        >
-          {isSubmitting ? 'Вхід...' : 'Увійти'}
-        </button>
-      </form>
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            fullWidth
+            isLoading={isSubmitting}
+            disabled={!captchaSolution}
+          >
+            Войти
+          </Button>
+        </form>
+      </div>
     </div>
   )
 }

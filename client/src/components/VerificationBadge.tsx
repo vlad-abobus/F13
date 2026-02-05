@@ -8,18 +8,18 @@ export default function VerificationBadge({ type, badge }: VerificationBadgeProp
 
   const colors: Record<string, { bg: string; text: string; label: string }> = {
     blue: {
-      bg: 'bg-blue-500',
-      text: 'text-white',
+      bg: 'bg-white',
+      text: 'text-black',
       label: 'Верифікований',
     },
     purple: {
-      bg: 'bg-purple-500',
-      text: 'text-white',
+      bg: 'bg-gray-300',
+      text: 'text-black',
       label: 'Особливий',
     },
     red: {
-      bg: 'bg-red-500',
-      text: 'text-white',
+      bg: 'bg-gray-200',
+      text: 'text-black',
       label: 'Премиум',
     },
   }

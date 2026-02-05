@@ -26,7 +26,7 @@ export default function HtmlPageEditor() {
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiClient.post('/pages', data)
+      const response = await apiClient.post('/pages', { ...data, language: 'ru' })
       return response.data
     },
     onSuccess: () => {
@@ -38,7 +38,7 @@ export default function HtmlPageEditor() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const response = await apiClient.put(`/pages/${id}`, data)
+      const response = await apiClient.put(`/pages/${id}`, { ...data, language: 'ru' })
       return response.data
     },
     onSuccess: () => {
@@ -63,7 +63,7 @@ export default function HtmlPageEditor() {
       slug: page.slug,
       title: page.title,
       content: page.content,
-      language: page.language,
+      language: 'ru',
       is_active: page.is_active,
     })
     setIsCreating(false)
@@ -97,18 +97,18 @@ export default function HtmlPageEditor() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Редактор HTML сторінок</h1>
+        <h1 className="text-3xl font-bold">Редактор HTML страниц</h1>
         <button
           onClick={handleCreate}
           className="px-4 py-2 border-2 border-white hover:bg-white hover:text-black"
         >
-          Створити сторінку
+          Создать страницу
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1">
-          <h2 className="text-2xl font-bold mb-4">Список сторінок</h2>
+          <h2 className="text-2xl font-bold mb-4">Список страниц</h2>
           <div className="space-y-2">
             {pages?.map((page: any) => (
               <div
@@ -154,20 +154,7 @@ export default function HtmlPageEditor() {
                 />
               </div>
 
-              <div>
-                <label className="block mb-2">Мова</label>
-                <select
-                  value={formData.language}
-                  onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                  className="w-full px-4 py-2 border-2 border-white bg-black text-white"
-                  disabled={!!selectedPage}
-                >
-                  <option value="ru">Русский</option>
-                  <option value="uk">Українська</option>
-                  <option value="en">English</option>
-                  <option value="kz">Қазақ</option>
-                </select>
-              </div>
+              <input type="hidden" value={formData.language} />
 
               <div>
                 <label className="block mb-2">HTML Контент</label>
@@ -197,7 +184,7 @@ export default function HtmlPageEditor() {
                   className="px-4 py-2 border-2 border-white hover:bg-white hover:text-black"
                   disabled={createMutation.isPending || updateMutation.isPending}
                 >
-                  {selectedPage ? 'Оновити' : 'Створити'}
+                  {selectedPage ? 'Обновить' : 'Создать'}
                 </button>
                 {selectedPage && (
                   <button
@@ -206,7 +193,7 @@ export default function HtmlPageEditor() {
                     className="px-4 py-2 border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
                     disabled={deleteMutation.isPending}
                   >
-                    Видалити
+                    Удалить
                   </button>
                 )}
                 <button
@@ -217,7 +204,7 @@ export default function HtmlPageEditor() {
                   }}
                   className="px-4 py-2 border-2 border-white hover:bg-white hover:text-black"
                 >
-                  Скасувати
+                  Отмена
                 </button>
               </div>
             </form>
@@ -225,7 +212,7 @@ export default function HtmlPageEditor() {
 
           {!selectedPage && !isCreating && (
             <div className="text-center py-8 text-gray-400">
-              Виберіть сторінку для редагування або створіть нову
+              Выберите страницу для редактирования или создайте новую
             </div>
           )}
         </div>

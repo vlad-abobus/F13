@@ -69,13 +69,13 @@ export default function Profile() {
       setCaptchaQuestionId(null)
       setCaptchaError(null)
       setShowCaptcha(false)
-      showToast('Повідомлення додано на стіну!', 'success')
+      showToast('Сообщение добавлено на стену!', 'success')
     },
     onError: () => {
       setCaptchaSolution(null)
       setCaptchaQuestionId(null)
       setCaptchaError(null)
-      showToast('Помилка при додаванні повідомлення', 'error')
+      showToast('Ошибка при добавлении сообщения', 'error')
     },
   })
 
@@ -93,7 +93,7 @@ export default function Profile() {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="text-center py-12">
-          <div className="text-xl">Завантаження профілю...</div>
+          <div className="text-xl">Загрузка профиля...</div>
         </div>
       </div>
     )
@@ -104,100 +104,97 @@ export default function Profile() {
   const createdDate = user.created_at ? new Date(user.created_at) : null
 
   return (
-    <div className="max-w-4xl mx-auto px-4">
-      {/* Header Section */}
-      <div className="border-2 border-white bg-gradient-to-br from-gray-900 to-black mb-6 rounded-xl overflow-hidden shadow-lg">
-        <div className="p-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-6">
-            {/* Avatar */}
-            <div className="flex-shrink-0">
-              <SafeImage
-                src={user.avatar_url}
-                alt={user.username}
-                className="w-32 h-32 rounded-full border-4 border-white object-cover"
-                fallback={
-                  <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-800 flex items-center justify-center text-4xl font-bold">
-                    {user.username.charAt(0).toUpperCase()}
-                  </div>
-                }
-              />
-            </div>
-
-            {/* User Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-3 mb-3">
-                <h1 className="text-3xl sm:text-4xl font-bold break-words">{user.username}</h1>
-                <VerificationBadge
-                  type={user.verification_type || 'none'}
-                  badge={user.verification_badge}
-                />
-                {user.status === 'admin' && (
-                  <span className="px-3 py-1 bg-red-600 text-white text-sm font-bold rounded">
-                    АДМІН
-                  </span>
-                )}
-              </div>
-
-              {user.bio && (
-                <p className="text-gray-300 mb-4 text-lg leading-relaxed whitespace-pre-wrap">
-                  {user.bio}
-                </p>
-              )}
-
-              {/* Stats */}
-              <div className="flex flex-wrap gap-6 mb-4 text-sm">
-                <div>
-                  <span className="text-gray-400">Постів: </span>
-                  <span className="font-bold text-white">{postsCount}</span>
+    <div className="max-w-5xl mx-auto px-4">
+      {/* Telegram Profile Header */}
+      <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 mb-6 rounded-2xl overflow-hidden shadow-2xl pb-8 pt-0">
+        {/* Banner */}
+        <div className="h-44 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 relative">
+          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-gray-900 to-transparent"></div>
+        </div>
+        {/* Profile Core Info: Avatar, Name, Bio */}
+        <div className="flex flex-col items-center -mt-24 px-6">
+          {/* Avatar */}
+          <div className="relative">
+            <SafeImage
+              src={user.avatar_url}
+              alt={user.username}
+              className="w-36 h-36 rounded-full border-4 border-gray-900 object-cover shadow-xl bg-white"
+              fallback={
+                <div className="w-36 h-36 rounded-full border-4 border-gray-900 bg-white flex items-center justify-center text-5xl font-bold text-black shadow-xl">
+                  {user.username.charAt(0).toUpperCase()}
                 </div>
-                {createdDate && (
-                  <div>
-                    <span className="text-gray-400">Реєстрація: </span>
-                    <span className="font-bold text-white">
-                      {format(createdDate, 'd MMM yyyy')}
-                    </span>
-                  </div>
-                )}
+              }
+            />
+            {user.status === 'admin' && (
+              <div className="absolute -bottom-2 -right-2 w-9 h-9 bg-red-600 rounded-full border-4 border-gray-900 flex items-center justify-center text-white text-base font-bold shadow-lg">
+                ⭐
               </div>
-
-              {/* Actions */}
-              <div className="flex flex-wrap gap-3">
-                {isOwnProfile ? (
-                  <Link
-                    to={`/profile/${username}/settings`}
-                    className="px-6 py-2 bg-white text-black font-bold hover:bg-gray-200 transition-colors"
-                  >
-                    ⚙️ Налаштування
-                  </Link>
-                ) : (
-                  isAuthenticated && (
-                    <button
-                      onClick={() => followMutation.mutate(user.id)}
-                      disabled={followMutation.isPending}
-                      className="px-6 py-2 bg-white text-black font-bold hover:bg-gray-200 transition-colors disabled:opacity-50"
-                    >
-                      {followMutation.isPending ? '...' : '👤 Підписатися'}
-                    </button>
-                  )
-                )}
-              </div>
-            </div>
+            )}
           </div>
-
+          {/* Username + Verification */}
+          <div className="flex flex-row items-center mt-5 gap-2 flex-wrap">
+            <h1 className="text-3xl sm:text-4xl font-bold break-words text-white">{user.username}</h1>
+            <VerificationBadge
+              type={user.verification_type || 'none'}
+              badge={user.verification_badge}
+            />
+          </div>
+          {/* Bio */}
+          {user.bio && (
+            <p className="text-gray-300 mt-2 text-base text-center leading-relaxed max-w-2xl whitespace-pre-wrap">
+              {user.bio}
+            </p>
+          )}
+          {/* Stats: Posts, Регистрация */}
+          <div className="flex gap-8 mt-5 text-sm text-center flex-wrap justify-center">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400">Постов:</span>
+              <span className="font-semibold text-white">{postsCount}</span>
+            </div>
+            {createdDate && (
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400">З нами з:</span>
+                <span className="font-semibold text-white">
+                  {format(createdDate, 'd MMM yyyy')}
+                </span>
+              </div>
+            )}
+          </div>
+          {/* Actions */}
+          <div className="flex flex-wrap gap-3 mt-6">
+            {isOwnProfile ? (
+              <Link
+                to={`/profile/${username}/settings`}
+                className="px-6 py-2.5 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 transition-all shadow-lg"
+              >
+                ⚙️ Настройки
+              </Link>
+            ) : (
+              isAuthenticated && (
+                <button
+                  onClick={() => followMutation.mutate(user.id)}
+                  disabled={followMutation.isPending}
+                  className="px-6 py-2.5 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 transition-all shadow-lg disabled:opacity-50"
+                >
+                  {followMutation.isPending ? '...' : '👤 Подписаться'}
+                </button>
+              )
+            )}
+          </div>
           {/* Badges Section */}
           {badges && badges.length > 0 && (
-            <div className="pt-6 border-t-2 border-white">
-              <h3 className="text-xl font-bold mb-4">🏆 Бейджі</h3>
+            <div className="pt-6 w-full max-w-2xl mx-auto border-t border-gray-700 mt-7">
+              <h3 className="text-lg font-semibold mb-4 text-white">🏆 Бейджи</h3>
               <BadgeDisplay badges={badges} />
             </div>
           )}
         </div>
       </div>
 
-      {/* Wall Section */}
+      {/* Wall Section - Messenger Style */}
       {isAuthenticated && (
-        <div className="border-2 border-white bg-black rounded-xl p-6 mb-6">
-          <h2 className="text-2xl font-bold mb-4">📝 Стіна</h2>
+        <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 rounded-2xl p-6 mb-6 shadow-xl">
+          <h2 className="text-2xl font-bold mb-6 text-white">📝 Стена</h2>
           
           <form
             onSubmit={(e) => {
@@ -205,7 +202,7 @@ export default function Profile() {
               if (!wallPostContent.trim()) return
               
               if (!captchaSolution || !captchaQuestionId) {
-                setCaptchaError('Будь ласка, розв\'яжіть CAPTCHA')
+                setCaptchaError('Пожалуйста, решите CAPTCHA')
                 setShowCaptcha(true)
                 return
               }
@@ -217,23 +214,23 @@ export default function Profile() {
             <textarea
               value={wallPostContent}
               onChange={(e) => setWallPostContent(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-900 border-2 border-white text-white rounded-lg min-h-[100px] resize-none"
-              placeholder={isOwnProfile ? 'Що у вас на думці?' : `Написати на стіні ${user.username}...`}
+              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 text-white rounded-xl min-h-[120px] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500"
+              placeholder={isOwnProfile ? 'Что у вас на уме?' : `Написать на стене ${user.username}...`}
             />
             
             {/* CAPTCHA Section with Collapse */}
-            <div className="mt-4 border-2 border-white bg-black rounded-lg overflow-hidden">
+            <div className="mt-4 bg-gray-800/30 border border-gray-700 rounded-xl overflow-hidden">
               <div 
-                className="p-3 border-b-2 border-white bg-gradient-to-r from-gray-900 to-gray-800 cursor-pointer hover:from-gray-800 hover:to-gray-700 transition-colors"
+                className="p-3 cursor-pointer hover:bg-gray-700/50 transition-colors"
                 onClick={() => setShowCaptcha(!showCaptcha)}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold">🔒 CAPTCHA (захист від ботів)</span>
-                  <span className="text-xl">{showCaptcha ? '▲' : '▼'}</span>
+                  <span className="font-semibold text-gray-300">🔒 CAPTCHA (защита от ботов)</span>
+                  <span className="text-xl text-gray-400">{showCaptcha ? '▲' : '▼'}</span>
                 </div>
               </div>
               {showCaptcha && (
-                <div className="p-4">
+                <div className="p-4 border-t border-gray-700">
                   <SimpleCaptcha
                     onSolution={(token, questionId) => {
                       setCaptchaSolution(token)
@@ -256,31 +253,58 @@ export default function Profile() {
             <button
               type="submit"
               disabled={!wallPostContent.trim() || createWallPostMutation.isPending || !captchaSolution || !captchaQuestionId}
-              className="mt-3 px-6 py-2 bg-white text-black font-bold hover:bg-gray-200 disabled:opacity-50 rounded-lg"
+              className="mt-3 px-6 py-2.5 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 disabled:opacity-50 transition-all shadow-lg"
             >
-              {createWallPostMutation.isPending ? 'Відправка...' : 'Опублікувати'}
+              {createWallPostMutation.isPending ? 'Отправка...' : 'Опубликовать'}
             </button>
           </form>
 
-          {/* Wall Posts */}
+          {/* Wall Posts - Messenger Style */}
           <div className="space-y-4">
             {wallPosts?.posts?.map((post: any) => (
-              <div key={post.id} className="border-2 border-white bg-gray-900 rounded-lg p-4">
-                <div className="flex items-center gap-3 mb-3">
+              <div key={post.id} className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 hover:bg-gray-800 transition-colors">
+                <div className="flex items-start gap-3 mb-3">
                   <SafeImage
                     src={post.author?.avatar_url}
                     alt={post.author?.username || 'User'}
-                    className="w-10 h-10 rounded-full border-2 border-white object-cover"
+                    className="w-12 h-12 rounded-full border-2 border-gray-600 object-cover flex-shrink-0"
                     fallback={
-                      <div className="w-10 h-10 rounded-full border-2 border-white bg-gray-700 flex items-center justify-center font-bold">
+                      <div className="w-12 h-12 rounded-full border-2 border-gray-600 bg-white flex items-center justify-center font-bold text-black flex-shrink-0">
                         {post.author?.username?.charAt(0).toUpperCase() || '?'}
                       </div>
                     }
                   />
-                  <div className="flex-1">
-                    <div className="font-bold">{post.author?.username || 'Анонім'}</div>
-                    <div className="text-sm text-gray-400">
-                      {format(new Date(post.created_at), 'dd.MM.yyyy HH:mm')}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold text-white">{post.author?.username || 'Аноним'}</span>
+                      <span className="text-xs text-gray-500">
+                        {format(new Date(post.created_at), 'dd.MM.yyyy HH:mm')}
+                      </span>
+                    </div>
+                    <p className="whitespace-pre-wrap text-gray-300 leading-relaxed">{post.content}</p>
+                    {post.image_url && (
+                      <SafeImage
+                        src={post.image_url}
+                        alt="Post"
+                        className="max-w-full rounded-lg mt-3"
+                        loading="lazy"
+                      />
+                    )}
+                    <div className="flex items-center gap-4 mt-3">
+                      <button
+                        onClick={async () => {
+                          try {
+                            await apiClient.post(`/profile-posts/${post.id}/like`)
+                            queryClient.invalidateQueries({ queryKey: ['profile-posts', username] })
+                            showToast('Лайк добавлен!', 'success')
+                          } catch {
+                            showToast('Ошибка', 'error')
+                          }
+                        }}
+                        className="text-sm text-gray-400 hover:text-white transition-colors"
+                      >
+                        ❤️ {post.likes_count}
+                      </button>
                     </div>
                   </div>
                   {(currentUser?.id === post.author_id || currentUser?.id === user.id || currentUser?.status === 'admin') && (
@@ -289,42 +313,23 @@ export default function Profile() {
                         try {
                           await apiClient.delete(`/profile-posts/${post.id}`)
                           queryClient.invalidateQueries({ queryKey: ['profile-posts', username] })
-                          showToast('Повідомлення видалено', 'info')
+                          showToast('Сообщение удалено', 'info')
                         } catch {
-                          showToast('Помилка при видаленні', 'error')
+                          showToast('Ошибка при удалении', 'error')
                         }
                       }}
-                      className="text-red-400 hover:text-red-300 text-sm"
+                      className="text-gray-400 hover:text-red-400 text-sm p-1 rounded hover:bg-gray-700 transition-colors"
                     >
                       ✕
                     </button>
                   )}
                 </div>
-                <p className="whitespace-pre-wrap mb-3">{post.content}</p>
-                {post.image_url && (
-                  <img src={post.image_url} alt="Post" className="max-w-full rounded-lg mb-3" />
-                )}
-                <div className="flex items-center gap-4 text-sm">
-                  <button
-                    onClick={async () => {
-                      try {
-                        await apiClient.post(`/profile-posts/${post.id}/like`)
-                        queryClient.invalidateQueries({ queryKey: ['profile-posts', username] })
-                        showToast('Лайк додано!', 'success')
-                      } catch {
-                        showToast('Помилка', 'error')
-                      }
-                    }}
-                    className="hover:underline"
-                  >
-                    ❤️ {post.likes_count}
-                  </button>
-                </div>
               </div>
             ))}
             {(!wallPosts?.posts || wallPosts.posts.length === 0) && (
-              <div className="text-center py-8 text-gray-400">
-                Поки що немає повідомлень на стіні
+              <div className="text-center py-12 text-gray-400 bg-gray-800/30 rounded-xl border border-gray-700">
+                <div className="text-4xl mb-3">💬</div>
+                <div>Пока нет сообщений на стене</div>
               </div>
             )}
           </div>
@@ -347,7 +352,7 @@ export default function Profile() {
           {(!postsData?.posts || postsData.posts.length === 0) && (
             <div className="border-2 border-white p-12 text-center">
               <div className="text-4xl mb-4">📝</div>
-              <div className="text-xl text-gray-400 mb-2">Поки що немає постів</div>
+              <div className="text-xl text-gray-400 mb-2">Пока нет постов</div>
               {isOwnProfile && (
                 <Link
                   to="/"

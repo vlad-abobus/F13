@@ -119,7 +119,7 @@ export default function SimpleCaptcha({ onSolution, onError }: SimpleCaptchaProp
             value={userAnswer}
             onChange={(e) => setUserAnswer(e.target.value)}
             placeholder="Введіть відповідь"
-            className="flex-1 px-3 py-2 bg-black border-2 border-white text-white focus:outline-none focus:border-blue-500"
+            className="flex-1 px-3 py-2 bg-black border-2 border-white text-white focus:outline-none focus:border-gray-400"
             autoComplete="off"
             disabled={isVerified}
             onKeyDown={(e) => {

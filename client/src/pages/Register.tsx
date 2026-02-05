@@ -6,6 +6,7 @@ import { z } from 'zod'
 import apiClient from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import SimpleCaptcha from '../components/SimpleCaptcha'
+import { Button, Input } from '../components/ui'
 
 const registerSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
@@ -55,82 +56,81 @@ export default function Register() {
 
   return (
     <div className="max-w-md mx-auto mt-8">
-      <h1 className="text-3xl font-bold mb-6">Реєстрація</h1>
+      <div className="mb-8 text-center">
+        <h1 className="text-4xl font-bold mb-2 text-white">
+          Регистрация
+        </h1>
+        <p className="text-gray-400">Создайте свой аккаунт</p>
+      </div>
 
       {error && (
-        <div className="bg-red-900 text-white p-4 mb-4 border-2 border-white">
+        <div className="bg-red-900/50 border border-red-500 text-white p-4 mb-6 rounded-xl">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label className="block mb-2">Username</label>
-          <input
+      <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 rounded-2xl p-6 shadow-xl">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <Input
             {...register('username')}
-            className="w-full px-4 py-2 bg-black border-2 border-white text-white"
+            label="Имя пользователя"
             type="text"
+            placeholder="Имя пользователя"
+            error={errors.username?.message}
           />
-          {errors.username && (
-            <p className="text-red-500 mt-1">{errors.username.message}</p>
-          )}
-        </div>
 
-        <div>
-          <label className="block mb-2">Email</label>
-          <input
+          <Input
             {...register('email')}
-            className="w-full px-4 py-2 bg-black border-2 border-white text-white"
+            label="Email"
             type="email"
+            placeholder="Email"
+            error={errors.email?.message}
           />
-          {errors.email && (
-            <p className="text-red-500 mt-1">{errors.email.message}</p>
-          )}
-        </div>
 
-        <div>
-          <label className="block mb-2">Password</label>
-          <input
+          <Input
             {...register('password')}
-            className="w-full px-4 py-2 bg-black border-2 border-white text-white"
+            label="Пароль"
             type="password"
+            placeholder="Пароль"
+            error={errors.password?.message}
           />
-          {errors.password && (
-            <p className="text-red-500 mt-1">{errors.password.message}</p>
-          )}
-        </div>
 
-        <div>
-          <label className="block mb-2">Confirm Password</label>
-          <input
+          <Input
             {...register('confirmPassword')}
-            className="w-full px-4 py-2 bg-black border-2 border-white text-white"
+            label="Подтвердите пароль"
             type="password"
+            placeholder="Подтвердите пароль"
+            error={errors.confirmPassword?.message}
           />
-          {errors.confirmPassword && (
-            <p className="text-red-500 mt-1">{errors.confirmPassword.message}</p>
-          )}
-        </div>
 
-        <SimpleCaptcha
-          onSolution={(solution, questionId) => {
-            setCaptchaChallenge(questionId)
-            setCaptchaSolution(solution)
-          }}
-          onError={(error) => {
-            setError(error)
-            setCaptchaSolution('')
-          }}
-        />
+          <div className="bg-gray-800/30 p-4 rounded-xl border border-gray-700">
+            <label className="block mb-3 text-sm font-semibold text-gray-300">
+              🔒 CAPTCHA (защита от ботов)
+            </label>
+            <SimpleCaptcha
+              onSolution={(solution, questionId) => {
+                setCaptchaChallenge(questionId)
+                setCaptchaSolution(solution)
+              }}
+              onError={(error) => {
+                setError(error)
+                setCaptchaSolution('')
+              }}
+            />
+          </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting || !captchaSolution}
-          className="w-full px-4 py-2 bg-white text-black font-bold hover:bg-gray-200 disabled:opacity-50"
-        >
-          {isSubmitting ? 'Реєстрація...' : 'Зареєструватися'}
-        </button>
-      </form>
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            fullWidth
+            isLoading={isSubmitting}
+            disabled={!captchaSolution}
+          >
+            Зарегистрироваться
+          </Button>
+        </form>
+      </div>
     </div>
   )
 }

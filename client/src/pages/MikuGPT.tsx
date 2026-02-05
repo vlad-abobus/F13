@@ -54,12 +54,12 @@ export default function MikuGPT() {
     },
     onError: (error: any) => {
       console.error('MikuGPT chat error:', error)
-      const errorMessage = error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Помилка при відправці повідомлення'
+      const errorMessage = error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Ошибка при отправке сообщения'
       showToast(errorMessage, 'error')
-      // Додати повідомлення про помилку в чат
+      // Добавить сообщение об ошибке в чат
       setChatHistory((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Вибач, зараз не можу відповісти ♪', emotion: 'happy_idle' },
+        { role: 'assistant', content: 'Извини, сейчас не могу ответить ♪', emotion: 'happy_idle' },
       ])
     },
   })
@@ -67,11 +67,11 @@ export default function MikuGPT() {
   const handleSend = () => {
     const trimmedMessage = message.trim()
     if (!trimmedMessage) {
-      showToast('Введіть повідомлення', 'warning')
+      showToast('Введите сообщение', 'warning')
       return
     }
     if (!isAuthenticated) {
-      showToast('Увійдіть, щоб спілкуватися з MikuGPT', 'warning')
+      showToast('Войдите, чтобы общаться с MikuGPT', 'warning')
       return
     }
     if (chatMutation.isPending) {
@@ -98,7 +98,7 @@ export default function MikuGPT() {
 
           <div className="space-y-4">
             <div>
-              <label className="block mb-2">Особистість</label>
+              <label className="block mb-2">Личность</label>
               <select
                 value={personality}
                 onChange={(e) => setPersonality(e.target.value)}
@@ -113,7 +113,7 @@ export default function MikuGPT() {
             </div>
 
             <div>
-              <label className="block mb-2">Набір емоцій</label>
+              <label className="block mb-2">Набор эмоций</label>
               <select
                 value={emotionSet}
                 onChange={(e) => setEmotionSet(e.target.value)}
@@ -158,7 +158,7 @@ export default function MikuGPT() {
         <div className="border-2 border-white p-4 h-96 overflow-y-auto mb-4 flex flex-col">
           <div className="flex-1 flex flex-col justify-end">
             {chatHistory.length === 0 ? (
-              <p className="text-center text-gray-500">Почніть розмову з MikuGPT ♪</p>
+              <p className="text-center text-gray-500">Начните разговор с MikuGPT ♪</p>
             ) : (
               <div className="space-y-4">
                 {chatHistory.map((msg, idx) => (
@@ -183,7 +183,7 @@ export default function MikuGPT() {
 
         {!isAuthenticated && (
           <div className="bg-yellow-900 text-white p-4 mb-4 border-2 border-white">
-            Увійдіть, щоб спілкуватися з MikuGPT
+            Войдите, чтобы общаться с MikuGPT
           </div>
         )}
 
@@ -200,14 +200,14 @@ export default function MikuGPT() {
             }}
             disabled={!isAuthenticated || chatMutation.isPending}
             className="flex-1 px-4 py-2 bg-black border-2 border-white text-white"
-            placeholder="Повідомлення..."
+            placeholder="Сообщение..."
           />
           <button
             onClick={handleSend}
             disabled={!isAuthenticated || chatMutation.isPending || !message.trim()}
             className="px-6 py-2 bg-white text-black font-bold hover:bg-gray-200 disabled:opacity-50"
           >
-            {chatMutation.isPending ? 'Відправка...' : 'Відправити'}
+            {chatMutation.isPending ? 'Отправка...' : 'Отправить'}
           </button>
         </div>
       </div>

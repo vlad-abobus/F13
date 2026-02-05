@@ -10,7 +10,6 @@ import SafeImage from '../components/SafeImage'
 
 const profileSchema = z.object({
   bio: z.string().max(500).optional(),
-  language: z.enum(['ru', 'uk', 'en', 'kz']),
 })
 
 type ProfileForm = z.infer<typeof profileSchema>
@@ -39,13 +38,13 @@ export default function ProfileSettings() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       bio: profileUser?.bio || '',
-      language: profileUser?.language || user?.language || 'ru',
     },
   })
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileForm) => {
-      return apiClient.put('/users/profile', data)
+      // Проект теперь на одном языке (русский)
+      return apiClient.put('/users/profile', { ...data, language: 'ru' })
     },
     onSuccess: (response) => {
       updateUser(response.data)
@@ -55,12 +54,12 @@ export default function ProfileSettings() {
 
   const uploadAvatarMutation = useMutation({
     mutationFn: async (file: File) => {
-      // Завантаження через Cloudinary endpoint
+      // Загрузка через Cloudinary endpoint
       const formData = new FormData()
       formData.append('file', file)
-      // Не встановлюємо Content-Type вручну - axios зробить це автоматично з правильним boundary
+      // Не задаём Content-Type вручную — axios сделает это автоматически с правильным boundary
       const uploadResponse = await apiClient.post('/upload', formData)
-      // Оновлюємо аватар користувача з secure_url з Cloudinary
+      // Обновляем аватар пользователя из secure_url Cloudinary
       const avatarUrl = uploadResponse.data.secure_url
       return apiClient.put('/users/profile', { avatar_url: avatarUrl })
     },
@@ -89,12 +88,12 @@ export default function ProfileSettings() {
   }
 
   if (user?.username !== username && user?.status !== 'admin') {
-    return <div className="text-center py-8">Доступ заборонено</div>
+    return <div className="text-center py-8">Доступ запрещён</div>
   }
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Налаштування профілю</h1>
+      <h1 className="text-3xl font-bold mb-6">Настройки профиля</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
@@ -124,27 +123,13 @@ export default function ProfileSettings() {
         </div>
 
         <div>
-          <label className="block mb-2">Біо</label>
+          <label className="block mb-2">О себе</label>
           <textarea
             {...register('bio')}
             className="w-full px-4 py-2 bg-black border-2 border-white text-white min-h-[100px]"
-            placeholder="Про себе..."
+            placeholder="О себе..."
           />
           {errors.bio && <p className="text-red-500 mt-1">{errors.bio.message}</p>}
-        </div>
-
-        <div>
-          <label className="block mb-2">Мова</label>
-          <select
-            {...register('language')}
-            className="w-full px-4 py-2 bg-black border-2 border-white text-white"
-          >
-            <option value="ru">Русский</option>
-            <option value="uk">Українська</option>
-            <option value="en">English</option>
-            <option value="kz">Қазақ</option>
-          </select>
-          {errors.language && <p className="text-red-500 mt-1">{errors.language.message}</p>}
         </div>
 
         <button
@@ -152,7 +137,7 @@ export default function ProfileSettings() {
           disabled={isSubmitting || updateProfileMutation.isPending}
           className="px-6 py-2 bg-white text-black font-bold hover:bg-gray-200 disabled:opacity-50"
         >
-          {isSubmitting || updateProfileMutation.isPending ? 'Збереження...' : 'Зберегти'}
+          {isSubmitting || updateProfileMutation.isPending ? 'Сохранение...' : 'Сохранить'}
         </button>
       </form>
     </div>

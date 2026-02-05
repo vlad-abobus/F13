@@ -7,6 +7,8 @@ interface SafeImageProps {
   placeholder?: string
   fallback?: string | ReactNode
   onError?: (e: React.SyntheticEvent<HTMLImageElement>) => void
+  loading?: 'lazy' | 'eager'
+  decoding?: 'async' | 'auto' | 'sync'
   [key: string]: any // Allow other img props
 }
 
@@ -23,6 +25,8 @@ export default function SafeImage({
   placeholder = '/assets/placeholder.svg',
   fallback,
   onError,
+  loading = 'lazy',
+  decoding = 'async',
   ...props
 }: SafeImageProps) {
   const [imgSrc, setImgSrc] = useState<string | null>(() => {
@@ -73,6 +77,8 @@ export default function SafeImage({
         src={imgSrc}
         alt={alt}
         className={className}
+        loading={loading}
+        decoding={decoding}
         onError={handleError}
         {...props}
       />

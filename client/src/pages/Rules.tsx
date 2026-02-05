@@ -17,7 +17,7 @@ export default function Rules() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Правила спільноти</h1>
+      <h1 className="text-3xl font-bold mb-6">Правила сообщества</h1>
       <div className="space-y-6">
         {rules?.map((rule: any) => (
           <div key={rule.id} className="border-2 border-white p-6">

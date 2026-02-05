@@ -50,34 +50,34 @@ export default function PostCard({ post }: PostCardProps) {
   })
 
   return (
-    <article className="border-2 border-white bg-black hover:border-gray-500 transition-colors">
+    <article className="bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:border-gray-600 transition-all">
       {/* Author Header */}
       {!post.is_anonymous && post.author && (
-        <div className="p-4 border-b-2 border-white bg-gradient-to-r from-gray-900 to-gray-800">
+        <div className="p-4 border-b border-gray-700 bg-gray-800/30">
           <div className="flex items-center justify-between">
             <Link 
               to={`/profile/${post.author.username}`} 
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity flex-1"
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity flex-1 group"
             >
               <SafeImage
                 src={post.author.avatar_url}
                 alt={post.author.username}
-                className="w-12 h-12 rounded-full border-2 border-white object-cover"
+                className="w-12 h-12 rounded-full border-2 border-gray-600 object-cover group-hover:border-white transition-colors"
                 fallback={
-                  <div className="w-12 h-12 rounded-full border-2 border-white bg-gray-700 flex items-center justify-center font-bold">
+                  <div className="w-12 h-12 rounded-full border-2 border-gray-600 bg-white flex items-center justify-center font-bold text-black group-hover:border-white transition-colors">
                     {post.author.username.charAt(0).toUpperCase()}
                   </div>
                 }
               />
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-lg">{post.author.username}</span>
+                  <span className="font-semibold text-white group-hover:text-gray-300 transition-colors">{post.author.username}</span>
                   <VerificationBadge
                     type={post.author.verification_type || 'none'}
                     badge={post.author.verification_badge}
                   />
                 </div>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-gray-500">
                   {format(new Date(post.created_at), 'd MMM yyyy, HH:mm')}
                 </div>
               </div>
@@ -90,7 +90,7 @@ export default function PostCard({ post }: PostCardProps) {
                   }
                 }}
                 disabled={deletePostMutation.isPending}
-                className="px-3 py-1 text-red-400 hover:text-red-300 border-2 border-red-400 hover:border-red-300 font-bold disabled:opacity-50"
+                className="px-3 py-1.5 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-lg font-semibold disabled:opacity-50 transition-all"
                 title={isAdmin ? 'Видалити пост (адмін)' : 'Видалити пост'}
               >
                 {deletePostMutation.isPending ? '...' : '🗑️'}
@@ -101,18 +101,18 @@ export default function PostCard({ post }: PostCardProps) {
       )}
 
       {/* Content */}
-      <div className="p-4">
-        <p className="mb-4 whitespace-pre-wrap text-lg leading-relaxed">{post.content}</p>
+      <div className="p-5">
+        <p className="mb-4 whitespace-pre-wrap text-base leading-relaxed text-gray-200">{post.content}</p>
 
         {/* Image */}
         {post.image_url && (
           <div className="mb-4">
             {post.is_nsfw && (
-              <div className="mb-2 px-3 py-1 bg-yellow-900 border-2 border-yellow-400 text-yellow-200 inline-block text-sm font-bold">
+              <div className="mb-2 px-3 py-1 bg-yellow-900/50 border border-yellow-500 text-yellow-200 inline-block text-sm font-semibold rounded-lg">
                 ⚠️ NSFW Контент
               </div>
             )}
-            <div className="border-2 border-white">
+            <div className="rounded-xl overflow-hidden border border-gray-700">
               <SafeImage
                 src={post.image_url}
                 alt="Post image"
@@ -128,7 +128,7 @@ export default function PostCard({ post }: PostCardProps) {
             {post.tags.map((tag, idx) => (
               <span
                 key={idx}
-                className="px-3 py-1 bg-gray-800 border border-white text-sm"
+                className="px-3 py-1 bg-gray-800/50 border border-gray-600 text-sm text-gray-300 rounded-lg hover:border-white hover:text-white transition-colors cursor-pointer"
               >
                 #{tag}
               </span>
@@ -137,21 +137,21 @@ export default function PostCard({ post }: PostCardProps) {
         )}
 
         {/* Actions */}
-        <div className="flex items-center gap-6 pt-4 border-t-2 border-white">
-          <button className="flex items-center gap-2 hover:text-red-400 transition-colors">
-            <span className="text-xl">❤️</span>
-            <span className="font-bold">{post.likes_count}</span>
+        <div className="flex items-center gap-6 pt-4 border-t border-gray-700">
+          <button className="flex items-center gap-2 hover:text-gray-300 transition-colors group">
+            <span className="text-xl group-hover:scale-110 transition-transform">❤️</span>
+            <span className="font-semibold text-gray-300">{post.likes_count}</span>
           </button>
           <button
             onClick={() => setShowComments(!showComments)}
-            className="flex items-center gap-2 hover:text-blue-400 transition-colors"
+            className="flex items-center gap-2 hover:text-gray-300 transition-colors group"
           >
-            <span className="text-xl">💬</span>
-            <span className="font-bold">{post.comments_count}</span>
+            <span className="text-xl group-hover:scale-110 transition-transform">💬</span>
+            <span className="font-semibold text-gray-300">{post.comments_count}</span>
           </button>
           <div className="ml-auto flex items-center gap-4">
             {post.is_anonymous && (
-              <span className="text-sm text-gray-400">Анонімний пост</span>
+              <span className="text-sm text-gray-500">Анонімний пост</span>
             )}
             {isAdmin && (
               <button
@@ -161,7 +161,7 @@ export default function PostCard({ post }: PostCardProps) {
                   }
                 }}
                 disabled={deletePostMutation.isPending}
-                className="px-3 py-1 text-red-400 hover:text-red-300 border-2 border-red-400 hover:border-red-300 font-bold disabled:opacity-50"
+                className="px-3 py-1.5 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-lg font-semibold disabled:opacity-50 transition-all"
                 title="Видалити пост (адмін)"
               >
                 {deletePostMutation.isPending ? '...' : '🗑️'}
@@ -173,7 +173,7 @@ export default function PostCard({ post }: PostCardProps) {
 
       {/* Moderation Warning */}
       {post.moderation_warning && (
-        <div className="p-4 bg-yellow-900 border-t-2 border-yellow-400">
+        <div className="p-4 bg-yellow-900/50 border-t border-yellow-500">
           <div className="flex items-start gap-2">
             <span className="text-yellow-400 text-xl">⚠️</span>
             <p className="text-yellow-200">{post.moderation_warning}</p>
@@ -183,7 +183,7 @@ export default function PostCard({ post }: PostCardProps) {
 
       {/* Comments Section */}
       {showComments && (
-        <div className="border-t-2 border-white">
+        <div className="border-t border-gray-700 bg-gray-800/30">
           <CommentSection postId={post.id} />
         </div>
       )}

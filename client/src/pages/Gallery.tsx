@@ -94,7 +94,7 @@ export default function Gallery() {
             Попередня
           </button>
           <span className="px-4 py-2">
-            Сторінка {data.pagination.page} з {data.pagination.pages}
+            Страница {data.pagination.page} из {data.pagination.pages}
           </span>
           <button
             onClick={() => setPage((p) => p + 1)}

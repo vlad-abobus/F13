@@ -85,7 +85,7 @@ export default function FlashGames() {
       clearInterval(waitForContainer)
 
       // Clear container and show loading
-      gameContainerRef.current.innerHTML = '<p class="text-center py-8">Завантаження гри...</p>'
+      gameContainerRef.current.innerHTML = '<p class="text-center py-8">Загрузка игры...</p>'
 
       // Function to actually load the game
       const actuallyLoadGame = () => {
@@ -95,7 +95,7 @@ export default function FlashGames() {
           if (!window.RufflePlayer) {
             console.error('RufflePlayer is not available')
             if (gameContainerRef.current) {
-              gameContainerRef.current.innerHTML = '<p class="text-red-400 text-center py-8">Ruffle плеєр не завантажений. Перезавантажте сторінку.</p>'
+              gameContainerRef.current.innerHTML = '<p class="text-red-400 text-center py-8">Ruffle плеер не загружен. Перезагрузите страницу.</p>'
             }
             return
           }
@@ -162,9 +162,9 @@ export default function FlashGames() {
               if (gameContainerRef.current) {
                 gameContainerRef.current.innerHTML = `
                   <div class="text-red-400 text-center py-8">
-                    <p>Помилка завантаження гри: ${error.message || 'Невідома помилка'}</p>
+                    <p>Ошибка загрузки игры: ${error.message || 'Неизвестная ошибка'}</p>
                     <p class="text-sm mt-2">URL: ${swfUrl}</p>
-                    <p class="text-sm">Перевірте що файл існує на сервері</p>
+                    <p class="text-sm">Проверьте, что файл существует на сервере</p>
                   </div>
                 `
               }
@@ -172,7 +172,7 @@ export default function FlashGames() {
         } catch (error) {
           console.error('Failed to create Ruffle player:', error)
           if (gameContainerRef.current) {
-            gameContainerRef.current.innerHTML = '<p class="text-red-400 text-center py-8">Помилка створення плеєра. Перевірте консоль.</p>'
+            gameContainerRef.current.innerHTML = '<p class="text-red-400 text-center py-8">Ошибка создания плеера. Проверьте консоль.</p>'
           }
         }
       }
@@ -195,7 +195,7 @@ export default function FlashGames() {
       timeoutId = setTimeout(() => {
         if (checkRuffleInterval) clearInterval(checkRuffleInterval)
         if (!window.RufflePlayer && gameContainerRef.current) {
-          gameContainerRef.current.innerHTML = '<p class="text-red-400 text-center py-8">Не вдалося завантажити Ruffle плеєр. Перевірте що файли в ruffle/ доступні.</p>'
+          gameContainerRef.current.innerHTML = '<p class="text-red-400 text-center py-8">Не удалось загрузить Ruffle плеер. Проверьте, что файлы в ruffle/ доступны.</p>'
         }
       }, 10000)
     }, 50)
@@ -209,62 +209,35 @@ export default function FlashGames() {
   }, [selectedGame, games])
 
   if (isLoading) {
-    return <div className="text-center py-8">Завантаження ігор...</div>
+    return <div className="text-center py-8">Загрузка игр...</div>
   }
 
   const selectedGameData = games?.find((g: any) => g.id === selectedGame)
 
   return (
     <div className="max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Flash Ігри</h1>
+      <h1 className="text-3xl font-bold mb-6">Flash игры</h1>
 
       {showFlashMessage && (
         <div className="border-2 border-yellow-500 bg-yellow-900 bg-opacity-30 p-6 mb-6 rounded">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <h2 className="text-xl font-bold mb-2 text-yellow-400">
-                ⚠️ Потрібно встановити Flash Player
+                ⚠️ Flash-контент запускается через Ruffle
               </h2>
               <p className="mb-3">
-                Flash Player — це простий спосіб запускати ваш улюблений Flash-контент в інтернеті за допомогою Ruffle. Грайте у Flash-ігри онлайн в будь-який час.
-              </p>
-              <p className="mb-3">
-                Ви шанувальник класичних флеш-ігор? Скучаєте по захоплюючих онлайн-іграх, які дарували вам радість на довгі години? Flash Player поверне вам гострі відчуття від флеш-ігор прямо у ваш браузер, де б ви не знаходились!
-              </p>
-              <p className="mb-3">
-                Емулятор Flash виявляє флеш-контент на веб-сторінці (який відображається у спливаючому вікні — зелений кружок), а потім замінює стандартні помилки відтворення флеш-файлів «Плагін Adobe Flash Player більше не підтримується» кнопкою «Грати», натиснувши на яку ви можете відкрити гру.
-              </p>
-              <p className="mb-3">
-                Емулятор Flash Player, який використовує движок емуляції Ruffle, дозволяє відтворювати флеш-контент у веб-браузерах. Це включає флеш-ігри, відео та різні файли, перетворені у сумісний формат для безшовної інтеграції з браузером.
+                Здесь Flash-игры запускаются через Ruffle (эмулятор Flash). Просто выберите игру слева — она откроется справа.
               </p>
               <div className="space-y-2">
-                <p className="font-semibold">Як працює розширення:</p>
-                <ol className="list-decimal list-inside space-y-1 ml-4 text-sm">
-                  <li>Перейдіть на сайт з флеш-іграми</li>
-                  <li>Натисніть на логотип розширення</li>
-                  <li>Перезавантажте веб-сторінку з флеш-грою</li>
-                  <li>Натисніть кнопку «Грати»</li>
-                  <li>Насолоджуйтесь флеш-грою!</li>
-                </ol>
-                <p className="mt-4">
-                  <a 
-                    href="https://chromewebstore.google.com/detail/flash-player-flash-emulat/nohenbjhjbaleokplonjkbmackfkpcne" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors"
-                  >
-                    Встановити Flash Player для Chrome
-                  </a>
-                </p>
                 <p className="text-xs text-gray-400 mt-2">
-                  Увага: Flash Player — це допоміжний інструмент для користувачів Google Chrome. Flash Player офіційно не пов'язаний з продуктами Adobe Flash Player або будь-якими іншими продуктами Adobe. Розширення повністю безкоштовне та просте у використанні.
+                  Примечание: для работы игр должен быть доступен Ruffle по адресу <code>/ruffle/ruffle.js</code>.
                 </p>
               </div>
             </div>
             <button
               onClick={() => setShowFlashMessage(false)}
               className="ml-4 text-white hover:text-gray-300 text-2xl"
-              aria-label="Закрити"
+              aria-label="Закрыть"
             >
               ×
             </button>
@@ -273,9 +246,9 @@ export default function FlashGames() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Список ігор зліва */}
+        {/* Список игр слева */}
         <div className="lg:col-span-1">
-          <h2 className="text-xl font-bold mb-4">Список ігор</h2>
+          <h2 className="text-xl font-bold mb-4">Список игр</h2>
           <div className="space-y-3">
             {games?.map((game: any) => (
               <div
@@ -296,7 +269,7 @@ export default function FlashGames() {
           </div>
         </div>
 
-        {/* Гра справа */}
+        {/* Игра справа */}
         <div className="lg:col-span-2">
           {selectedGame ? (
             <div className="border-2 border-white p-4">
@@ -322,7 +295,7 @@ export default function FlashGames() {
           ) : (
             <div className="border-2 border-white p-8 text-center">
               <p className="text-gray-400 text-lg">
-                Виберіть гру зі списку зліва, щоб почати грати
+                Выберите игру из списка слева, чтобы начать играть
               </p>
             </div>
           )}

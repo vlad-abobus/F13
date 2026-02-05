@@ -74,7 +74,7 @@ export default function PostForm({ onSuccess }: PostFormProps) {
       }
 
       if (!captchaSolution || !captchaQuestionId) {
-        setCaptchaError('Будь ласка, розв\'яжіть CAPTCHA')
+        setCaptchaError('Пожалуйста, решите CAPTCHA')
         return
       }
 
@@ -109,122 +109,134 @@ export default function PostForm({ onSuccess }: PostFormProps) {
   if (!isAuthenticated) {
     return (
       <div className="border-2 border-white p-4 text-center">
-        <p>Увійдіть, щоб створити пост</p>
+        <p>Войдите, чтобы создать пост</p>
       </div>
     )
   }
 
   if (isCollapsed) {
     return (
-      <div className="mb-6 flex justify-end">
+      <div className="mb-6">
         <button
           onClick={() => setIsCollapsed(false)}
-          className="px-4 py-2 text-sm bg-white text-black font-bold hover:bg-gray-200"
+          className="w-full px-6 py-4 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
         >
-          📝 Створити пост
+          <span className="text-xl">✍️</span>
+          <span>Создать пост</span>
         </button>
       </div>
     )
   }
 
   return (
-    <div className="border-2 border-white bg-black mb-6 rounded-xl overflow-hidden">
-      <div 
-        className="p-4 border-b-2 border-white bg-gradient-to-r from-gray-900 to-gray-800 cursor-pointer hover:from-gray-800 hover:to-gray-700 transition-colors"
-        onClick={() => setIsCollapsed(!isCollapsed)}
-      >
-        <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold">📝 Створити пост</h3>
-          <span className="text-2xl">▲</span>
+    <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 mb-6 rounded-2xl overflow-hidden shadow-2xl">
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold text-white">Создать пост</h3>
+          <button
+            onClick={() => setIsCollapsed(true)}
+            className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700 rounded-lg"
+          >
+            ✕
+          </button>
         </div>
-      </div>
-      
-      {!isCollapsed && (
-        <form onSubmit={handleSubmit(onSubmit)} className="p-4 space-y-4">
-        <div>
-          <textarea
-            {...register('content')}
-            className="w-full px-4 py-3 bg-black border-2 border-white text-white min-h-[120px] text-lg focus:outline-none focus:border-gray-500 transition-colors resize-y"
-            placeholder="Що у вас на думці?"
-          />
-          {errors.content && (
-            <p className="text-red-400 mt-2 text-sm">{errors.content.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="block mb-2 text-sm text-gray-300">
-            📷 Додати зображення (необов'язково)
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            className="w-full px-4 py-2 bg-black border-2 border-white text-white file:mr-4 file:py-2 file:px-4 file:bg-white file:text-black file:border-0 file:cursor-pointer hover:file:bg-gray-200"
-          />
-          {imagePreview && (
-            <div className="mt-4 border-2 border-white">
-              <img 
-                src={imagePreview} 
-                alt="Preview" 
-                className="w-full max-h-64 object-contain" 
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-6 pt-4 border-t-2 border-white">
-          <label className="flex items-center gap-2 cursor-pointer hover:text-gray-300 transition-colors">
-            <input 
-              type="checkbox" 
-              {...register('is_nsfw')}
-              className="w-5 h-5 cursor-pointer"
+        
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <textarea
+              {...register('content')}
+              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 text-white min-h-[140px] text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-y rounded-xl placeholder:text-gray-500"
+              placeholder="Что у вас на уме?"
             />
-            <span className="text-sm">⚠️ NSFW</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer hover:text-gray-300 transition-colors">
-            <input 
-              type="checkbox" 
-              {...register('is_anonymous')}
-              className="w-5 h-5 cursor-pointer"
-            />
-            <span className="text-sm">👤 Анонімний</span>
-          </label>
-        </div>
-
-          {/* CAPTCHA */}
-          <div className="pt-4 border-t-2 border-white">
-            <label className="block mb-2 text-sm font-bold text-gray-300">
-              🔒 CAPTCHA (захист від ботів)
-            </label>
-            <SimpleCaptcha
-              onSolution={(token, questionId) => {
-                setCaptchaSolution(token)
-                setCaptchaQuestionId(questionId)
-                setCaptchaError(null)
-              }}
-              onError={(error) => {
-                setCaptchaError(error)
-                setCaptchaSolution(null)
-                setCaptchaQuestionId(null)
-              }}
-            />
-            {captchaError && (
-              <p className="text-red-400 mt-2 text-sm">{captchaError}</p>
+            {errors.content && (
+              <p className="text-red-400 mt-2 text-sm">{errors.content.message}</p>
             )}
           </div>
 
-          <div className="pt-4">
+          <div>
+            <label className="block mb-2 text-sm text-gray-300 font-medium">
+              Изображение (необязательно)
+            </label>
+            <div className="relative">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="w-full px-4 py-2 bg-gray-800/50 border border-gray-600 text-white rounded-xl file:mr-4 file:py-2 file:px-4 file:bg-blue-600 file:text-white file:border-0 file:rounded-lg file:cursor-pointer hover:file:bg-blue-700 transition-colors"
+              />
+            </div>
+            {imagePreview && (
+              <div className="mt-4 rounded-xl overflow-hidden border border-gray-600">
+                <img 
+                  src={imagePreview} 
+                  alt="Preview" 
+                  className="w-full max-h-64 object-contain bg-gray-900" 
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-gray-700">
+            <label className="flex items-center gap-2 cursor-pointer hover:text-gray-300 transition-colors group">
+              <input 
+                type="checkbox" 
+                {...register('is_nsfw')}
+                className="w-4 h-4 cursor-pointer accent-red-500"
+              />
+              <span className="text-sm text-gray-300 group-hover:text-white">NSFW</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer hover:text-gray-300 transition-colors group">
+              <input 
+                type="checkbox" 
+                {...register('is_anonymous')}
+                className="w-4 h-4 cursor-pointer accent-blue-500"
+              />
+              <span className="text-sm text-gray-300 group-hover:text-white">Анонімний</span>
+            </label>
+          </div>
+
+          {/* CAPTCHA */}
+          <div className="pt-4 border-t border-gray-700">
+            <label className="block mb-3 text-sm font-semibold text-gray-300">
+              🔒 CAPTCHA (защита от ботов)
+            </label>
+            <div className="bg-gray-800/30 p-4 rounded-xl border border-gray-700">
+              <SimpleCaptcha
+                onSolution={(token, questionId) => {
+                  setCaptchaSolution(token)
+                  setCaptchaQuestionId(questionId)
+                  setCaptchaError(null)
+                }}
+                onError={(error) => {
+                  setCaptchaError(error)
+                  setCaptchaSolution(null)
+                  setCaptchaQuestionId(null)
+                }}
+              />
+              {captchaError && (
+                <p className="text-red-400 mt-2 text-sm">{captchaError}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="pt-4 flex gap-3">
+            <button
+              type="button"
+              onClick={() => setIsCollapsed(true)}
+              className="flex-1 px-6 py-3 bg-gray-700 text-white font-semibold rounded-xl hover:bg-gray-600 transition-colors"
+            >
+              Отмена
+            </button>
             <button
               type="submit"
               disabled={isSubmitting || !captchaSolution || !captchaQuestionId}
-              className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-white to-gray-200 text-black font-bold hover:from-gray-200 hover:to-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-lg rounded-lg shadow-lg"
+              className="flex-1 px-6 py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
             >
-              {isSubmitting ? '⏳ Публікація...' : '📝 Опублікувати'}
+              {isSubmitting ? '⏳ Публикация...' : '📝 Опубликовать'}
             </button>
           </div>
         </form>
-      )}
+      </div>
     </div>
   )
 }

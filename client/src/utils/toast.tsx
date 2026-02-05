@@ -60,12 +60,12 @@ export function ToastContainer() {
           key={toast.id}
           className={`px-6 py-4 rounded-lg shadow-lg border-2 border-white font-bold min-w-[300px] max-w-md animate-slide-in ${
             toast.type === 'success'
-              ? 'bg-green-600 text-white'
+              ? 'bg-gray-800 text-white'
               : toast.type === 'error'
-              ? 'bg-red-600 text-white'
+              ? 'bg-black text-white'
               : toast.type === 'warning'
-              ? 'bg-yellow-600 text-black'
-              : 'bg-blue-600 text-white'
+              ? 'bg-gray-700 text-white'
+              : 'bg-gray-800 text-white'
           }`}
         >
           {toast.message}
