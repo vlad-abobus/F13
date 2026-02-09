@@ -5,15 +5,16 @@ import PostCard from '../components/PostCard'
 import PostForm from '../components/PostForm'
 import StatusDisplay from '../components/StatusDisplay'
 
-type FilterType = 'new' | 'popular' | 'following'
+type EmotionFilter = 'all' | 'HP' | 'AG' | 'NT'
 
 export default function Home() {
-  const [filter, setFilter] = useState<FilterType>('new')
+  const [emotionFilter, setEmotionFilter] = useState<EmotionFilter>('all')
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['posts', filter],
+    queryKey: ['posts', emotionFilter],
     queryFn: async () => {
-      const response = await apiClient.get(`/posts?filter=${filter}`)
+      const params = emotionFilter === 'all' ? '' : `?emotion=${emotionFilter}`
+      const response = await apiClient.get(`/posts${params}`)
       return response.data
     },
     refetchInterval: 30000, // 30 seconds
@@ -25,38 +26,48 @@ export default function Home() {
 
   return (
     <div className="max-w-4xl mx-auto px-4">
-      {/* Filter Tabs */}
+      {/* Emotion Filter Tabs (All / HP / AG / NT) */}
       <div className="mb-6">
-        <div className="flex gap-2 bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden p-1">
+        <div className="flex flex-wrap gap-2 bg-black border border-white rounded-xl p-2">
           <button
-            onClick={() => setFilter('new')}
-            className={`flex-1 px-6 py-3 font-semibold text-base transition-all rounded-lg ${
-              filter === 'new'
-                ? 'bg-white text-black shadow-lg'
-                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+            onClick={() => setEmotionFilter('all')}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg border transition-colors ${
+              emotionFilter === 'all'
+                ? 'bg-white text-black border-white'
+                : 'bg-black text-white border-white/40 hover:border-white hover:text-gray-100'
             }`}
           >
-            🆕 Новые
+            ВСЕ
           </button>
           <button
-            onClick={() => setFilter('popular')}
-            className={`flex-1 px-6 py-3 font-semibold text-base transition-all rounded-lg ${
-              filter === 'popular'
-                ? 'bg-white text-black shadow-lg'
-                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+            onClick={() => setEmotionFilter('HP')}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg border transition-colors ${
+              emotionFilter === 'HP'
+                ? 'bg-white text-black border-white'
+                : 'bg-black text-white border-white/40 hover:border-white hover:text-gray-100'
             }`}
           >
-            🔥 Популярные
+            HP 
           </button>
           <button
-            onClick={() => setFilter('following')}
-            className={`flex-1 px-6 py-3 font-semibold text-base transition-all rounded-lg ${
-              filter === 'following'
-                ? 'bg-white text-black shadow-lg'
-                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+            onClick={() => setEmotionFilter('AG')}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg border transition-colors ${
+              emotionFilter === 'AG'
+                ? 'bg-white text-black border-white'
+                : 'bg-black text-white border-white/40 hover:border-white hover:text-gray-100'
             }`}
           >
-            👥 Подписки
+            AG 
+          </button>
+          <button
+            onClick={() => setEmotionFilter('NT')}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg border transition-colors ${
+              emotionFilter === 'NT'
+                ? 'bg-white text-black border-white'
+                : 'bg-black text-white border-white/40 hover:border-white hover:text-gray-100'
+            }`}
+          >
+            NT 
           </button>
         </div>
       </div>

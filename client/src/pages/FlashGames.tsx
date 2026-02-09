@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import apiClient from '../api/client'
 import { useAuthStore } from '../store/authStore'
+import { logger } from '../utils/logger'
 
 declare global {
   interface Window {
@@ -37,17 +38,16 @@ export default function FlashGames() {
       return
     }
 
-    // Use absolute URL to backend to avoid proxy issues
+    // Use relative URL to support both development and production
     const script = document.createElement('script')
-    script.src = 'http://localhost:5000/ruffle/ruffle.js'
+    script.src = `${window.location.origin}/ruffle/ruffle.js`
     script.async = true
     script.crossOrigin = 'anonymous'
     script.onerror = (error) => {
-      console.error('Failed to load Ruffle player:', error)
-      console.error('Make sure the Flask backend is running on http://localhost:5000')
+      logger.error('Failed to load Ruffle player:', error)
     }
     script.onload = () => {
-      console.log('Ruffle player loaded successfully')
+      logger.debug('Ruffle player loaded successfully')
     }
     document.body.appendChild(script)
 
@@ -57,10 +57,16 @@ export default function FlashGames() {
   }, [])
 
   const loadGame = async (game: any) => {
-    console.log('Loading game:', game)
+    logger.debug('Loading game:', game)
     setSelectedGame(game.id)
     playMutation.mutate(game.id)
   }
+  // Filter out unwanted games (Tetris, Snake, Pac-Man) by checking keywords
+  const filteredGames = games?.filter((game: any) => {
+    const title = (game.title || '').toLowerCase()
+    const forbidden = ['tetris', 'snake', 'pac-man', 'pacman', 'pac man', 'pac']
+    return !forbidden.some((kw) => title.includes(kw))
+  })
 
   // Load game when selectedGame changes and container is ready
   useEffect(() => {
@@ -68,7 +74,7 @@ export default function FlashGames() {
       return
     }
 
-    const game = games?.find((g: any) => g.id === selectedGame)
+    const game = filteredGames?.find((g: any) => g.id === selectedGame)
     if (!game) {
       return
     }
@@ -87,33 +93,52 @@ export default function FlashGames() {
       // Clear container and show loading
       gameContainerRef.current.innerHTML = '<p class="text-center py-8">Загрузка игры...</p>'
 
-      // Function to actually load the game
+      // Function to load iframe game (HTML5/WebGL)
+      const loadIframeGame = () => {
+        if (!gameContainerRef.current || !game.iframe_url) return
+        
+        try {
+          gameContainerRef.current.innerHTML = ''
+          const iframe = document.createElement('iframe')
+          iframe.src = game.iframe_url.startsWith('http') ? game.iframe_url : `https:${game.iframe_url}`
+          iframe.style.width = '100%'
+          iframe.style.height = '600px'
+          iframe.style.border = 'none'
+          iframe.style.borderRadius = '4px'
+          iframe.allowFullscreen = true
+          gameContainerRef.current.appendChild(iframe)
+          logger.debug('HTML5/WebGL game loaded via iframe')
+        } catch (error) {
+          logger.error('Failed to load iframe game:', error)
+          if (gameContainerRef.current) {
+            gameContainerRef.current.innerHTML = '<p class="text-gray-300 text-center py-8">Ошибка загрузки игры. Проверьте консоль.</p>'
+          }
+        }
+      }
+
+      // Function to actually load Ruffle game (Flash/SWF)
       const actuallyLoadGame = () => {
         if (!gameContainerRef.current || !game) return
         
         try {
           if (!window.RufflePlayer) {
-            console.error('RufflePlayer is not available')
+            logger.error('RufflePlayer is not available')
             if (gameContainerRef.current) {
-              gameContainerRef.current.innerHTML = '<p class="text-red-400 text-center py-8">Ruffle плеер не загружен. Перезагрузите страницу.</p>'
+              gameContainerRef.current.innerHTML = '<p class="text-gray-300 text-center py-8">Ruffle плеер не загружен. Перезагрузите страницу.</p>'
             }
             return
           }
 
           const ruffle = window.RufflePlayer.newest({
-            // Configure Ruffle to prevent external requests
             allowScriptAccess: false,
             allowNetworking: 'none',
-            // Disable external trackers
             wmode: 'direct'
           })
           const player = ruffle.createPlayer()
           
-          // Clear container and append player
           gameContainerRef.current.innerHTML = ''
           gameContainerRef.current.appendChild(player)
           
-          // Set container and player styles for proper display
           if (gameContainerRef.current) {
             gameContainerRef.current.style.width = '100%'
             gameContainerRef.current.style.height = '600px'
@@ -123,28 +148,24 @@ export default function FlashGames() {
             gameContainerRef.current.style.justifyContent = 'center'
           }
           
-          // Set player styles
           player.style.width = '100%'
           player.style.height = '100%'
           player.style.maxWidth = '100%'
           player.style.maxHeight = '100%'
           
-          // Convert relative URL to absolute backend URL
           const swfUrl = game.swf_url.startsWith('http') 
             ? game.swf_url 
-            : `http://localhost:5000${game.swf_url}`
+            : `${window.location.origin}${game.swf_url}`
           
-          console.log('Loading SWF from:', swfUrl)
+          logger.debug('Loading SWF from:', swfUrl)
           
-          // First verify the file exists by trying to fetch it
           fetch(swfUrl, { method: 'HEAD' })
             .then((response) => {
               if (!response.ok) {
                 throw new Error(`File not found: ${response.status} ${response.statusText}`)
               }
-              console.log('SWF file verified, loading into Ruffle...')
+              logger.debug('SWF file verified, loading into Ruffle...')
               
-              // Load game with proper options (as shown in the example)
               return player.load({
                 url: swfUrl,
                 autoplay: 'on',
@@ -154,14 +175,14 @@ export default function FlashGames() {
               })
             })
             .then(() => {
-              console.log('Game loaded successfully into Ruffle')
+              logger.debug('Game loaded successfully into Ruffle')
             })
             .catch((error: any) => {
-              console.error('Failed to load game:', error)
+              logger.error('Failed to load game:', error)
               
               if (gameContainerRef.current) {
                 gameContainerRef.current.innerHTML = `
-                  <div class="text-red-400 text-center py-8">
+                  <div class="text-gray-300 text-center py-8">
                     <p>Ошибка загрузки игры: ${error.message || 'Неизвестная ошибка'}</p>
                     <p class="text-sm mt-2">URL: ${swfUrl}</p>
                     <p class="text-sm">Проверьте, что файл существует на сервере</p>
@@ -170,34 +191,45 @@ export default function FlashGames() {
               }
             })
         } catch (error) {
-          console.error('Failed to create Ruffle player:', error)
+          logger.error('Failed to create Ruffle player:', error)
           if (gameContainerRef.current) {
-            gameContainerRef.current.innerHTML = '<p class="text-red-400 text-center py-8">Ошибка создания плеера. Проверьте консоль.</p>'
+            gameContainerRef.current.innerHTML = '<p class="text-gray-300 text-center py-8">Ошибка создания плеера. Проверьте консоль.</p>'
           }
         }
       }
 
-      // If Ruffle is already loaded, load immediately
-      if (window.RufflePlayer) {
-        actuallyLoadGame()
-        return
-      }
-
-      // Otherwise wait for Ruffle to load
-      checkRuffleInterval = setInterval(() => {
+      // Determine game type and load accordingly
+      if (game.iframe_url) {
+        // Load as iframe/HTML5/WebGL game
+        loadIframeGame()
+      } else if (game.swf_url) {
+        // Load as Ruffle/Flash game
+        // If Ruffle is already loaded, load immediately
         if (window.RufflePlayer) {
-          if (checkRuffleInterval) clearInterval(checkRuffleInterval)
           actuallyLoadGame()
+          return
         }
-      }, 100)
 
-      // Timeout after 10 seconds
-      timeoutId = setTimeout(() => {
-        if (checkRuffleInterval) clearInterval(checkRuffleInterval)
-        if (!window.RufflePlayer && gameContainerRef.current) {
-          gameContainerRef.current.innerHTML = '<p class="text-red-400 text-center py-8">Не удалось загрузить Ruffle плеер. Проверьте, что файлы в ruffle/ доступны.</p>'
+        // Otherwise wait for Ruffle to load
+        checkRuffleInterval = setInterval(() => {
+          if (window.RufflePlayer) {
+            if (checkRuffleInterval) clearInterval(checkRuffleInterval)
+            actuallyLoadGame()
+          }
+        }, 100)
+
+        // Timeout after 10 seconds
+        timeoutId = setTimeout(() => {
+          if (checkRuffleInterval) clearInterval(checkRuffleInterval)
+          if (!window.RufflePlayer && gameContainerRef.current) {
+            gameContainerRef.current.innerHTML = '<p class="text-gray-300 text-center py-8">Не удалось загрузить Ruffle плеер. Проверьте, что файлы в ruffle/ доступны.</p>'
+          }
+        }, 10000)
+      } else {
+        if (gameContainerRef.current) {
+          gameContainerRef.current.innerHTML = '<p class="text-gray-300 text-center py-8">Ошибка: нет URL для игры</p>'
         }
-      }, 10000)
+      }
     }, 50)
 
     // Cleanup
@@ -206,23 +238,23 @@ export default function FlashGames() {
       if (checkRuffleInterval) clearInterval(checkRuffleInterval)
       if (timeoutId) clearTimeout(timeoutId)
     }
-  }, [selectedGame, games])
+  }, [selectedGame, filteredGames])
 
   if (isLoading) {
     return <div className="text-center py-8">Загрузка игр...</div>
   }
 
-  const selectedGameData = games?.find((g: any) => g.id === selectedGame)
+  const selectedGameData = filteredGames?.find((g: any) => g.id === selectedGame)
 
   return (
     <div className="max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Flash игры</h1>
 
       {showFlashMessage && (
-        <div className="border-2 border-yellow-500 bg-yellow-900 bg-opacity-30 p-6 mb-6 rounded">
+        <div className="border-2 border-gray-600 bg-gray-800 bg-opacity-30 p-6 mb-6 rounded">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h2 className="text-xl font-bold mb-2 text-yellow-400">
+              <h2 className="text-xl font-bold mb-2 text-gray-300">
                 ⚠️ Flash-контент запускается через Ruffle
               </h2>
               <p className="mb-3">
@@ -250,12 +282,12 @@ export default function FlashGames() {
         <div className="lg:col-span-1">
           <h2 className="text-xl font-bold mb-4">Список игр</h2>
           <div className="space-y-3">
-            {games?.map((game: any) => (
+            {filteredGames?.map((game: any) => (
               <div
                 key={game.id}
                 className={`border-2 p-4 cursor-pointer transition-colors ${
                   selectedGame === game.id
-                    ? 'border-blue-500 bg-blue-900 bg-opacity-30'
+                    ? 'border-gray-600 bg-gray-800 bg-opacity-30'
                     : 'border-white hover:bg-gray-900'
                 }`}
                 onClick={() => loadGame(game)}
@@ -274,7 +306,7 @@ export default function FlashGames() {
           {selectedGame ? (
             <div className="border-2 border-white p-4">
               <div className="mb-4">
-                <h2 className="text-2xl font-bold mb-2">{selectedGameData?.title || 'Гра'}</h2>
+                <h2 className="text-2xl font-bold mb-2">{selectedGameData?.title || 'Игра'}</h2>
                 {selectedGameData?.description && (
                   <p className="text-gray-400 mb-4">{selectedGameData.description}</p>
                 )}
@@ -304,3 +336,4 @@ export default function FlashGames() {
     </div>
   )
 }
+

@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
-import apiClient from '../api/client'
 import SafeImage from './SafeImage'
 
 export default function StatusDisplay() {
   const { data: activeUsers } = useQuery({
     queryKey: ['active-users'],
     queryFn: async () => {
-      // TODO: Implement API endpoint for active users
-      // For now, return empty array
-      return []
+      const response = await fetch('/api/users/active')
+      if (!response.ok) return []
+      return response.json()
     },
     refetchInterval: 5000, // Update every 5 seconds
   })
@@ -18,9 +17,9 @@ export default function StatusDisplay() {
   }
 
   const statusLabels: Record<string, string> = {
-    GRY: '🎮 Грає',
-    PST: '📝 Пише пост',
-    MIK: '🤖 Спілкується з Miku',
+    GRY: '🎮 Играет',
+    PST: '📝 У постах',
+    MIK: '🤖 Говорит с мику',
   }
 
   return (

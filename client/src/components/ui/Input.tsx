@@ -23,7 +23,7 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, helperText, fullWidth = true, className = '', ...props }, ref) => {
     const baseClasses = 'px-4 py-2 bg-gray-800/50 border text-white rounded-xl focus:outline-none focus:ring-2 transition-all placeholder:text-gray-500'
-    const borderClass = error ? 'border-red-500 focus:ring-red-500' : 'border-gray-600 focus:ring-white focus:border-transparent'
+    const borderClass = error ? 'border-gray-600 focus:ring-white' : 'border-gray-600 focus:ring-white focus:border-transparent'
     const widthClass = fullWidth ? 'w-full' : ''
 
     return (
@@ -39,7 +39,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {error && (
-          <p className="text-red-400 mt-2 text-sm">{error}</p>
+          <p className="text-gray-300 mt-2 text-sm">{error}</p>
         )}
         {helperText && !error && (
           <p className="text-gray-400 mt-2 text-sm">{helperText}</p>

@@ -226,7 +226,7 @@ export default function GoonZone() {
                               </div>
                               <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
                                 <div
-                                  className="bg-blue-400 h-full transition-all"
+                                  className="bg-gray-400 h-full transition-all"
                                   style={{ width: `${getPercentage(poll.votes?.[opt] || 0, totalVotes)}%` }}
                                 />
                               </div>
@@ -268,7 +268,7 @@ export default function GoonZone() {
                             }}
                           />
                           {captcha.error && (
-                            <p className="text-red-400 mt-2 text-sm">{captcha.error}</p>
+                            <p className="text-gray-300 mt-2 text-sm">{captcha.error}</p>
                           )}
                         </div>
                       </div>
@@ -306,7 +306,7 @@ export default function GoonZone() {
             {news?.map((item: any) => (
               <div key={item.id} className="bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 rounded-xl p-5 shadow-lg">
                 {item.is_pinned && (
-                  <span className="inline-block mb-2 text-yellow-400 text-sm font-semibold">📌 Закреплено</span>
+                  <span className="inline-block mb-2 text-gray-300 text-sm font-semibold">📌 Закреплено</span>
                 )}
                 <h3 className="font-bold mb-2 text-white">{item.title}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{item.content}</p>

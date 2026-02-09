@@ -9,8 +9,8 @@ import SimpleCaptcha from '../components/SimpleCaptcha'
 import { Button, Input } from '../components/ui'
 
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required'),
+  username: z.string().min(1, 'Требуется имя пользователя'),
+  password: z.string().min(1, 'Требуется пароль'),
   captcha_token: z.string().optional(),
 })
 
@@ -58,7 +58,7 @@ export default function Login() {
       </div>
 
       {error && (
-        <div className="bg-red-900/50 border border-red-500 text-white p-4 mb-6 rounded-xl">
+        <div className="bg-gray-800 border border-gray-600 text-white p-4 mb-6 rounded-xl">
           {error}
         </div>
       )}

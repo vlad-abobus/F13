@@ -26,13 +26,13 @@ export default function PostsTab({
             <div className="flex gap-2">
               <button
                 onClick={() => approvePostMutation.mutate(post.id)}
-                className="px-4 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700"
+                className="px-4 py-2 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600"
               >
                 ✅ Одобрить
               </button>
               <button
                 onClick={() => rejectPostMutation.mutate(post.id)}
-                className="px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700"
+                className="px-4 py-2 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600"
               >
                 ❌ Отклонить
               </button>

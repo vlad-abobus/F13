@@ -44,6 +44,24 @@ def get_user_posts(username):
         }
     }), 200
 
+@users_bp.route('/active', methods=['GET'])
+def get_active_users():
+    """Get list of active users (online status only)"""
+    limit = min(request.args.get('limit', 20, type=int), 100)
+    
+    # Query users with current activity status (not idle)
+    active_users = User.query.filter(
+        User.activity_status != '',
+        User.activity_status != None
+    ).order_by(User.updated_at.desc()).limit(limit).all()
+    
+    return jsonify([{
+        'id': user.id,
+        'username': user.username,
+        'avatar_url': user.avatar_url,
+        'status': 'в мережі'  # Simple online status without details
+    } for user in active_users]), 200
+
 @users_bp.route('/profile', methods=['PUT'])
 @token_required
 def update_profile():

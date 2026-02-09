@@ -20,16 +20,21 @@ interface PostCardProps {
     comments_count: number
     created_at: string
     author?: {
+      id: string
       username: string
       avatar_url?: string
-      verification_type?: string
+      verification_type?: 'none' | 'blue' | 'purple' | 'red'
+      verification_badge?: string
     }
     is_anonymous?: boolean
+    moderation_warning?: string
+    theme?: 'HP' | 'AG' | 'NT' | null
   }
 }
 
 export default function PostCard({ post }: PostCardProps) {
   const [showComments, setShowComments] = useState(false)
+  const [showNsfwContent, setShowNsfwContent] = useState(false)
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
   const isAdmin = user?.status === 'admin'
@@ -42,10 +47,10 @@ export default function PostCard({ post }: PostCardProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] })
       queryClient.invalidateQueries({ queryKey: ['user-posts'] })
-      showToast('Пост видалено', 'info')
+      showToast('Пост удален', 'info')
     },
     onError: () => {
-      showToast('Помилка при видаленні поста', 'error')
+      showToast('Ошибка при удалении поста', 'error')
     },
   })
 
@@ -85,13 +90,13 @@ export default function PostCard({ post }: PostCardProps) {
             {(isAdmin || isAuthor) && (
               <button
                 onClick={() => {
-                  if (window.confirm('Ви впевнені, що хочете видалити цей пост?')) {
+                  if (window.confirm('Вы уверены, что хотите удалить этот пост?')) {
                     deletePostMutation.mutate(post.id)
                   }
                 }}
                 disabled={deletePostMutation.isPending}
-                className="px-3 py-1.5 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-lg font-semibold disabled:opacity-50 transition-all"
-                title={isAdmin ? 'Видалити пост (адмін)' : 'Видалити пост'}
+                className="px-3 py-1.5 text-gray-300 hover:text-gray-200 hover:bg-gray-700/50 rounded-lg font-semibold disabled:opacity-50 transition-all"
+                title={isAdmin ? 'Удалить пост (админ)' : 'Удалить пост'}
               >
                 {deletePostMutation.isPending ? '...' : '🗑️'}
               </button>
@@ -102,23 +107,54 @@ export default function PostCard({ post }: PostCardProps) {
 
       {/* Content */}
       <div className="p-5">
-        <p className="mb-4 whitespace-pre-wrap text-base leading-relaxed text-gray-200">{post.content}</p>
+        {post.is_nsfw && !showNsfwContent ? (
+          <div className="space-y-4">
+            <div className="border-2 border-gray-600 bg-black text-gray-300 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center gap-3">
+              <div className="text-2xl">⚠️</div>
+              <div className="flex-1">
+                <p className="font-semibold mb-1">NSFW контент</p>
+                <p className="text-sm text-gray-200/80">
+                  Эта запись отмечена как NSFW. Контент скрыт. Нажмите, чтобы показать на собственный риск.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNsfwContent(true)}
+                className="mt-2 md:mt-0 px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Показать
+              </button>
+            </div>
 
-        {/* Image */}
-        {post.image_url && (
-          <div className="mb-4">
-            {post.is_nsfw && (
-              <div className="mb-2 px-3 py-1 bg-yellow-900/50 border border-yellow-500 text-yellow-200 inline-block text-sm font-semibold rounded-lg">
-                ⚠️ NSFW Контент
+            {post.image_url && (
+              <div className="rounded-xl overflow-hidden border border-gray-700 bg-black flex items-center justify-center h-64">
+                <span className="text-sm text-gray-400 text-center px-4">
+                  Изображение скрыто для NSFW-поста. Нажмите &quot;Показать&quot;, чтобы просмотреть.
+                </span>
               </div>
             )}
-            <div className="rounded-xl overflow-hidden border border-gray-700">
-              <SafeImage
-                src={post.image_url}
-                alt="Post image"
-                className={`w-full max-h-96 object-contain ${post.is_nsfw ? 'blur-sm' : ''}`}
-              />
-            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="whitespace-pre-wrap text-base leading-relaxed text-gray-200">{post.content}</p>
+
+            {/* Image */}
+            {post.image_url && (
+              <div>
+                {post.is_nsfw && (
+                  <div className="mb-2 px-3 py-1 bg-black border border-white text-white inline-block text-xs font-semibold rounded-lg">
+                    ⚠️ NSFW изображение
+                  </div>
+                )}
+                <div className="rounded-xl overflow-hidden border border-gray-700 bg-black">
+                  <SafeImage
+                    src={post.image_url}
+                    alt="Post image"
+                    className="w-full max-h-96 object-contain"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -150,19 +186,26 @@ export default function PostCard({ post }: PostCardProps) {
             <span className="font-semibold text-gray-300">{post.comments_count}</span>
           </button>
           <div className="ml-auto flex items-center gap-4">
+            {post.theme && (
+              <span className="text-xs border border-white px-2 py-1 rounded-full text-gray-100 bg-black">
+                {post.theme === 'HP' && 'HP 😊 Хеппі'}
+                {post.theme === 'AG' && 'AG 😡 Ангрі'}
+                {post.theme === 'NT' && 'NT 😐 Нейтрал'}
+              </span>
+            )}
             {post.is_anonymous && (
-              <span className="text-sm text-gray-500">Анонімний пост</span>
+              <span className="text-sm text-gray-500">Анонимный пост</span>
             )}
             {isAdmin && (
               <button
                 onClick={() => {
-                  if (window.confirm('Ви впевнені, що хочете видалити цей пост?')) {
+                  if (window.confirm('Вы уверены, что хотите удалить этот пост?')) {
                     deletePostMutation.mutate(post.id)
                   }
                 }}
                 disabled={deletePostMutation.isPending}
-                className="px-3 py-1.5 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-lg font-semibold disabled:opacity-50 transition-all"
-                title="Видалити пост (адмін)"
+                className="px-3 py-1.5 text-gray-300 hover:text-gray-200 hover:bg-gray-700/50 rounded-lg font-semibold disabled:opacity-50 transition-all"
+                title="Удалить пост (админ)"
               >
                 {deletePostMutation.isPending ? '...' : '🗑️'}
               </button>
@@ -173,10 +216,10 @@ export default function PostCard({ post }: PostCardProps) {
 
       {/* Moderation Warning */}
       {post.moderation_warning && (
-        <div className="p-4 bg-yellow-900/50 border-t border-yellow-500">
+        <div className="p-4 bg-gray-700/30 border-t border-gray-600">
           <div className="flex items-start gap-2">
-            <span className="text-yellow-400 text-xl">⚠️</span>
-            <p className="text-yellow-200">{post.moderation_warning}</p>
+            <span className="text-gray-300 text-xl">⚠️</span>
+            <p className="text-gray-200">{post.moderation_warning}</p>
           </div>
         </div>
       )}

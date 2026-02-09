@@ -17,8 +17,8 @@ export default function BadgeDisplay({ badges }: BadgeDisplayProps) {
 
   const rarityColors: Record<string, string> = {
     common: 'border-gray-400',
-    rare: 'border-blue-400',
-    epic: 'border-purple-400',
+    rare: 'border-gray-600',
+    epic: 'border-gray-800',
   }
 
   return (

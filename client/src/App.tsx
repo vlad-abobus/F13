@@ -12,6 +12,7 @@ import Register from './pages/Register'
 import Profile from './pages/Profile'
 import ProfileSettings from './pages/ProfileSettings'
 import MikuGPT from './pages/MikuGPT'
+import MikuAdminRequest from './pages/MikuAdminRequest'
 import GoonZone from './pages/GoonZone'
 import Gallery from './pages/Gallery'
 import FlashGames from './pages/FlashGames'
@@ -21,6 +22,7 @@ import Documentation from './pages/Documentation'
 import About from './pages/About'
 import Tech from './pages/Tech'
 import Donations from './pages/Donations'
+import Reports from './pages/Reports'
 import { ToastContainer } from './utils/toast'
 
 // Loading fallback component for Suspense
@@ -46,6 +48,14 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/miku" element={<MikuGPT />} />
+                <Route
+                  path="/miku-admin"
+                  element={
+                    <ProtectedRoute>
+                      <MikuAdminRequest />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="/goonzone" element={<GoonZone />} />
                 <Route path="/rules" element={<Rules />} />
                 <Route path="/gallery" element={<Gallery />} />
@@ -54,6 +64,14 @@ function App() {
                 <Route path="/about" element={<About />} />
                 <Route path="/tech" element={<Tech />} />
                 <Route path="/donations" element={<Donations />} />
+                <Route
+                  path="/reports"
+                  element={
+                    <ProtectedRoute>
+                      <Reports />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/profile/:username"
                   element={

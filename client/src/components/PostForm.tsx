@@ -5,12 +5,14 @@ import { z } from 'zod'
 import apiClient from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import SimpleCaptcha from './SimpleCaptcha'
+import { logger } from '../utils/logger'
 
 const postSchema = z.object({
-  content: z.string().min(1, 'Content is required').max(5000, 'Content too long'),
+  content: z.string().min(1, 'Содержание требуется').max(5000, 'Содержание слишком длинное'),
   tags: z.array(z.string()).optional(),
   is_nsfw: z.boolean().default(false),
   is_anonymous: z.boolean().default(false),
+  emotion: z.enum(['HP', 'AG', 'NT']).default('NT'),
 })
 
 type PostForm = z.infer<typeof postSchema>
@@ -35,6 +37,9 @@ export default function PostForm({ onSuccess }: PostFormProps) {
     reset,
   } = useForm<PostForm>({
     resolver: zodResolver(postSchema),
+    defaultValues: {
+      emotion: 'NT',
+    },
   })
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,9 +57,9 @@ export default function PostForm({ onSuccess }: PostFormProps) {
   const onSubmit = async (data: PostForm) => {
     const authState = useAuthStore.getState()
     
-    // Check if we have a token before making the request
+    // Проверяем, есть ли токен аутентификации перед запросом
     if (!authState.accessToken && !authState.refreshToken) {
-      console.error('No authentication token available. Please log in again.')
+      logger.error('Нет доступного токена аутентификации. Пожалуйста, войдите еще раз.')
       useAuthStore.getState().logout()
       window.location.href = '/login'
       return
@@ -64,12 +69,12 @@ export default function PostForm({ onSuccess }: PostFormProps) {
       let imageUrl = null
 
       if (imageFile) {
-        // Завантаження через Cloudinary endpoint
+        // Загрузка через конечную точку Cloudinary
         const formData = new FormData()
         formData.append('file', imageFile)
-        // Не встановлюємо Content-Type вручну - axios зробить це автоматично з правильним boundary
+        // Не устанавливаем Content-Type вручную - axios сделает это автоматически
         const uploadResponse = await apiClient.post('/upload', formData)
-        // Використовуємо secure_url з Cloudinary
+        // Используем secure_url из Cloudinary
         imageUrl = uploadResponse.data.secure_url
       }
 
@@ -78,8 +83,11 @@ export default function PostForm({ onSuccess }: PostFormProps) {
         return
       }
 
+      const { emotion, ...rest } = data
+
       await apiClient.post('/posts/', {
-        ...data,
+        ...rest,
+        theme: emotion,
         image_url: imageUrl,
         captcha_token: captchaSolution,
         captcha_question_id: captchaQuestionId,
@@ -94,8 +102,8 @@ export default function PostForm({ onSuccess }: PostFormProps) {
       setIsCollapsed(true)
       onSuccess?.()
     } catch (err: any) {
-      console.error('Failed to create post:', err)
-      // If it's a 401 error and we don't have a refresh token, redirect to login
+      logger.error('Не удалось создать пост:', err)
+      // Если это ошибка 401 и у нас нет токена обновления, перенаправляем на вход
       if (err.response?.status === 401) {
         const authState = useAuthStore.getState()
         if (!authState.refreshToken) {
@@ -121,7 +129,7 @@ export default function PostForm({ onSuccess }: PostFormProps) {
           onClick={() => setIsCollapsed(false)}
           className="w-full px-6 py-4 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
         >
-          <span className="text-xl">✍️</span>
+          <span className="text-xl"></span>
           <span>Создать пост</span>
         </button>
       </div>
@@ -145,11 +153,11 @@ export default function PostForm({ onSuccess }: PostFormProps) {
           <div>
             <textarea
               {...register('content')}
-              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 text-white min-h-[140px] text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-y rounded-xl placeholder:text-gray-500"
+              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 text-white min-h-[140px] text-base focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent transition-all resize-y rounded-xl placeholder:text-gray-500"
               placeholder="Что у вас на уме?"
             />
             {errors.content && (
-              <p className="text-red-400 mt-2 text-sm">{errors.content.message}</p>
+              <p className="text-gray-300 mt-2 text-sm">{errors.content.message}</p>
             )}
           </div>
 
@@ -162,7 +170,7 @@ export default function PostForm({ onSuccess }: PostFormProps) {
                 type="file"
                 accept="image/*"
                 onChange={handleImageChange}
-                className="w-full px-4 py-2 bg-gray-800/50 border border-gray-600 text-white rounded-xl file:mr-4 file:py-2 file:px-4 file:bg-blue-600 file:text-white file:border-0 file:rounded-lg file:cursor-pointer hover:file:bg-blue-700 transition-colors"
+                className="w-full px-4 py-2 bg-gray-800/50 border border-gray-600 text-white rounded-xl file:mr-4 file:py-2 file:px-4 file:bg-gray-700 file:text-white file:border-0 file:rounded-lg file:cursor-pointer hover:file:bg-gray-600 transition-colors"
               />
             </div>
             {imagePreview && (
@@ -181,7 +189,7 @@ export default function PostForm({ onSuccess }: PostFormProps) {
               <input 
                 type="checkbox" 
                 {...register('is_nsfw')}
-                className="w-4 h-4 cursor-pointer accent-red-500"
+                className="w-4 h-4 cursor-pointer accent-white"
               />
               <span className="text-sm text-gray-300 group-hover:text-white">NSFW</span>
             </label>
@@ -189,10 +197,44 @@ export default function PostForm({ onSuccess }: PostFormProps) {
               <input 
                 type="checkbox" 
                 {...register('is_anonymous')}
-                className="w-4 h-4 cursor-pointer accent-blue-500"
+                className="w-4 h-4 cursor-pointer accent-white"
               />
-              <span className="text-sm text-gray-300 group-hover:text-white">Анонімний</span>
+              <span className="text-sm text-gray-300 group-hover:text-white">Анонимный</span>
             </label>
+          </div>
+
+          {/* Emotion selection HP / AG / NT */}
+          <div className="pt-4 border-t border-gray-700">
+            <p className="mb-2 text-sm font-medium text-gray-300">Как вы себя чувствуете?</p>
+            <div className="flex flex-wrap gap-2">
+              <label className="px-3 py-2 border border-white rounded-lg text-xs md:text-sm cursor-pointer flex items-center gap-2 hover:bg-white hover:text-black transition-colors">
+                <input
+                  type="radio"
+                  value="HP"
+                  {...register('emotion')}
+                  className="w-3 h-3 cursor-pointer"
+                />
+                <span>HP</span>
+              </label>
+              <label className="px-3 py-2 border border-white rounded-lg text-xs md:text-sm cursor-pointer flex items-center gap-2 hover:bg-white hover:text-black transition-colors">
+                <input
+                  type="radio"
+                  value="AG"
+                  {...register('emotion')}
+                  className="w-3 h-3 cursor-pointer"
+                />
+                <span>AG</span>
+              </label>
+              <label className="px-3 py-2 border border-white rounded-lg text-xs md:text-sm cursor-pointer flex items-center gap-2 hover:bg-white hover:text-black transition-colors">
+                <input
+                  type="radio"
+                  value="NT"
+                  {...register('emotion')}
+                  className="w-3 h-3 cursor-pointer"
+                />
+                <span>NT</span>
+              </label>
+            </div>
           </div>
 
           {/* CAPTCHA */}
@@ -214,7 +256,7 @@ export default function PostForm({ onSuccess }: PostFormProps) {
                 }}
               />
               {captchaError && (
-                <p className="text-red-400 mt-2 text-sm">{captchaError}</p>
+                <p className="text-gray-300 mt-2 text-sm">{captchaError}</p>
               )}
             </div>
           </div>

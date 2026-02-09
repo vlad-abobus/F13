@@ -3,15 +3,7 @@
 ## 📋 Production Checklist
 
 ### Перед деплоєм:
-
-- [ ] Змініть `SECRET_KEY` та `JWT_SECRET_KEY` в `.env`
-- [ ] Використовуйте PostgreSQL (не SQLite!)
-- [ ] Встановіть Redis для кешування
-- [ ] Налаштуйте HTTPS
-- [ ] Обмежте `CORS_ORIGINS`
-- [ ] Змініть пароль MikuGPT користувача
 - [ ] Налаштуйте регулярні бекапи БД
-
 ---
 
 ## 🐳 Docker Deployment
@@ -77,7 +69,47 @@ volumes:
   redis_data:
 ```
 
----
+## Docker (recommended)
+
+1. Build and run with docker-compose (will build client and backend, start Postgres and Redis):
+
+```bash
+docker-compose build --pull --no-cache
+docker-compose up -d
+```
+
+2. Access the app at `http://<host>` (Nginx proxy listens on 80/443 and forwards to the web container). If you don't use the proxy, you can port-forward `8000` to the web service by changing the `docker-compose.yml` mapping.
+
+3. Environment variables
+
+- Create a `.env` file at repo root or provide env vars to your host. Example minimal `.env`:
+
+```
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=changeme
+POSTGRES_DB=freedom13
+DATABASE_URL=postgresql://postgres:changeme@db:5432/freedom13
+SECRET_KEY=replace-with-secure-value
+JWT_SECRET_KEY=replace-with-secure-value
+REDIS_HOST=redis
+REDIS_PORT=6379
+ADMIN_NOTIFICATION_EMAILS=admin@example.com
+MAIL_SMTP_HOST=smtp.example.com
+MAIL_SMTP_PORT=587
+MAIL_USERNAME=your-sender@example.com
+MAIL_PASSWORD=supersecret
+```
+
+4. Volumes
+
+- `uploads` volume is mounted to `/app/uploads` so uploaded files persist across container restarts.
+
+5. Logs & management
+
+- View logs: `docker-compose logs -f web`
+- Run a one-off shell: `docker-compose run --rm web sh`
+
+Troubleshooting: if the client does not show, ensure `client/dist` was built into the image (the Dockerfile copies it during build). Rebuild with `docker-compose build --no-cache web`.
 
 ## ☁️ Cloud Deployment
 

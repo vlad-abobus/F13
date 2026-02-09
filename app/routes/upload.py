@@ -70,27 +70,6 @@ def upload_image():
     api_key = current_app.config.get('CLOUDINARY_API_KEY')
     api_secret = current_app.config.get('CLOUDINARY_API_SECRET')
     
-    # #region agent log
-    with open('.cursor/debug.log', 'a', encoding='utf-8') as f:
-        import json
-        f.write(json.dumps({
-            'location': 'app/routes/upload.py:57',
-            'message': 'Cloudinary config values before setup',
-            'data': {
-                'has_cloudinary_url': bool(cloudinary_url),
-                'cloudinary_url_preview': cloudinary_url[:50] + '...' if cloudinary_url and len(cloudinary_url) > 50 else cloudinary_url,
-                'cloud_name': cloud_name,
-                'has_api_key': bool(api_key),
-                'has_api_secret': bool(api_secret),
-                'api_key_preview': api_key[:10] + '...' if api_key and len(api_key) > 10 else api_key
-            },
-            'timestamp': int(datetime.utcnow().timestamp() * 1000),
-            'sessionId': 'debug-session',
-            'runId': 'run1',
-            'hypothesisId': 'A'
-        }) + '\n')
-    # #endregion
-    
     try:
         # Налаштування Cloudinary
         if cloudinary_url:
@@ -100,86 +79,14 @@ def upload_image():
             # Встановлюємо в os.environ, якщо ще не встановлено
             if 'CLOUDINARY_URL' not in os.environ:
                 os.environ['CLOUDINARY_URL'] = cloudinary_url
-            # #region agent log
-            with open('.cursor/debug.log', 'a', encoding='utf-8') as f:
-                import json
-                f.write(json.dumps({
-                    'location': 'app/routes/upload.py:71',
-                    'message': 'Before cloudinary.config() with CLOUDINARY_URL',
-                    'data': {
-                        'cloudinary_url_in_env': 'CLOUDINARY_URL' in os.environ,
-                        'cloudinary_url_value_preview': os.environ.get('CLOUDINARY_URL', '')[:50] + '...' if len(os.environ.get('CLOUDINARY_URL', '')) > 50 else os.environ.get('CLOUDINARY_URL', '')
-                    },
-                    'timestamp': int(datetime.utcnow().timestamp() * 1000),
-                    'sessionId': 'debug-session',
-                    'runId': 'run1',
-                    'hypothesisId': 'C'
-                }) + '\n')
-            # #endregion
             cloudinary.config()
-            # #region agent log
-            with open('.cursor/debug.log', 'a', encoding='utf-8') as log_file:
-                import json
-                config_obj = cloudinary.config()
-                log_file.write(json.dumps({
-                    'location': 'app/routes/upload.py:118',
-                    'message': 'After cloudinary.config() with CLOUDINARY_URL',
-                    'data': {
-                        'cloudinary_config_cloud_name': getattr(config_obj, 'cloud_name', None),
-                        'cloudinary_config_api_key': getattr(config_obj, 'api_key', None)[:10] + '...' if getattr(config_obj, 'api_key', None) and len(getattr(config_obj, 'api_key', None)) > 10 else getattr(config_obj, 'api_key', None),
-                        'has_cloudinary_config_api_secret': bool(getattr(config_obj, 'api_secret', None)),
-                        'os_env_cloudinary_url': os.environ.get('CLOUDINARY_URL', '')[:80] + '...' if len(os.environ.get('CLOUDINARY_URL', '')) > 80 else os.environ.get('CLOUDINARY_URL', '')
-                    },
-                    'timestamp': int(datetime.utcnow().timestamp() * 1000),
-                    'sessionId': 'debug-session',
-                    'runId': 'run1',
-                    'hypothesisId': 'H4'
-                }) + '\n')
-            # #endregion
         elif all([cloud_name, api_key, api_secret]):
             # Використовуємо окремі змінні
-            # #region agent log
-            with open('.cursor/debug.log', 'a', encoding='utf-8') as f:
-                import json
-                f.write(json.dumps({
-                    'location': 'app/routes/upload.py:74',
-                    'message': 'Before cloudinary.config() with separate vars',
-                    'data': {
-                        'cloud_name': cloud_name,
-                        'api_key_preview': api_key[:10] + '...' if api_key and len(api_key) > 10 else api_key,
-                        'has_api_secret': bool(api_secret)
-                    },
-                    'timestamp': int(datetime.utcnow().timestamp() * 1000),
-                    'sessionId': 'debug-session',
-                    'runId': 'run1',
-                    'hypothesisId': 'A'
-                }) + '\n')
-            # #endregion
             cloudinary.config(
                 cloud_name=cloud_name,
                 api_key=api_key,
                 api_secret=api_secret
             )
-            # #region agent log
-            with open('.cursor/debug.log', 'a', encoding='utf-8') as log_file:
-                import json
-                config_obj = cloudinary.config()
-                log_file.write(json.dumps({
-                    'location': 'app/routes/upload.py:156',
-                    'message': 'After cloudinary.config() with separate vars',
-                    'data': {
-                        'passed_cloud_name': cloud_name,
-                        'cloudinary_config_cloud_name': getattr(config_obj, 'cloud_name', None),
-                        'passed_api_key_preview': api_key[:10] + '...' if api_key and len(api_key) > 10 else api_key,
-                        'cloudinary_config_api_key_preview': getattr(config_obj, 'api_key', None)[:10] + '...' if getattr(config_obj, 'api_key', None) and len(getattr(config_obj, 'api_key', None)) > 10 else getattr(config_obj, 'api_key', None),
-                        'has_cloudinary_config_api_secret': bool(getattr(config_obj, 'api_secret', None))
-                    },
-                    'timestamp': int(datetime.utcnow().timestamp() * 1000),
-                    'sessionId': 'debug-session',
-                    'runId': 'run1',
-                    'hypothesisId': 'H4'
-                }) + '\n')
-            # #endregion
         else:
             return jsonify({
                 'error': 'Cloudinary configuration missing. Please set CLOUDINARY_URL or CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET'
@@ -187,35 +94,6 @@ def upload_image():
         
         # Завантаження файлу в Cloudinary
         # Використовуємо secure=True для отримання HTTPS URL
-        # #region agent log
-        with open('.cursor/debug.log', 'a', encoding='utf-8') as log_file:
-            import json
-            config_obj = cloudinary.config()
-            # Test API connection by trying to ping Cloudinary
-            try:
-                ping_result = cloudinary.api.ping()
-                ping_success = True
-                ping_error = None
-            except Exception as ping_e:
-                ping_success = False
-                ping_error = str(ping_e)
-            log_file.write(json.dumps({
-                'location': 'app/routes/upload.py:164',
-                'message': 'Before cloudinary.uploader.upload()',
-                'data': {
-                    'cloudinary_config_cloud_name': getattr(config_obj, 'cloud_name', None),
-                    'cloudinary_config_api_key_preview': getattr(config_obj, 'api_key', None)[:10] + '...' if getattr(config_obj, 'api_key', None) and len(getattr(config_obj, 'api_key', None)) > 10 else getattr(config_obj, 'api_key', None),
-                    'has_cloudinary_config_api_secret': bool(getattr(config_obj, 'api_secret', None)),
-                    'file_filename': file.filename if hasattr(file, 'filename') else None,
-                    'cloudinary_ping_success': ping_success,
-                    'cloudinary_ping_error': ping_error
-                },
-                'timestamp': int(datetime.utcnow().timestamp() * 1000),
-                'sessionId': 'debug-session',
-                'runId': 'run1',
-                'hypothesisId': 'H6'
-            }) + '\n')
-        # #endregion
         upload_result = cloudinary.uploader.upload(
             file,
             folder='freedom13',  # Папка в Cloudinary для організації
@@ -257,30 +135,6 @@ def upload_image():
         import traceback
         error_msg = str(e)
         error_traceback = traceback.format_exc()
-        
-        # #region agent log
-        try:
-            with open('.cursor/debug.log', 'a', encoding='utf-8') as log_file:
-                import json
-                log_file.write(json.dumps({
-                    'location': 'app/routes/upload.py:190',
-                    'message': 'Upload exception caught',
-                    'data': {
-                        'error_type': type(e).__name__,
-                        'error_message': error_msg,
-                        'error_traceback': error_traceback,
-                        'cloudinary_url': cloudinary_url[:50] + '...' if cloudinary_url and len(cloudinary_url) > 50 else cloudinary_url if 'cloudinary_url' in locals() else None,
-                        'cloud_name': cloud_name if 'cloud_name' in locals() else None,
-                        'has_api_key': bool(api_key) if 'api_key' in locals() else None
-                    },
-                    'timestamp': int(datetime.utcnow().timestamp() * 1000),
-                    'sessionId': 'debug-session',
-                    'runId': 'run1',
-                    'hypothesisId': 'A'
-                }) + '\n')
-        except Exception:
-            pass  # Don't fail if logging fails
-        # #endregion
         
         # Логування помилки
         current_app.logger.error(f'Upload error: {error_msg}\n{error_traceback}')

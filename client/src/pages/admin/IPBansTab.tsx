@@ -78,7 +78,7 @@ export default function IPBansTab({
           <button
             onClick={handleCreateBan}
             disabled={!banIP || createIPBanMutation.isPending}
-            className="px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 disabled:opacity-50"
+            className="px-6 py-3 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 disabled:opacity-50"
           >
             {createIPBanMutation.isPending ? '...' : '🚫 Забанить IP'}
           </button>
@@ -100,7 +100,7 @@ export default function IPBansTab({
                 </div>
                 <button
                   onClick={() => removeIPBanMutation.mutate(ban.id)}
-                  className="px-4 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700"
+                  className="px-4 py-2 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600"
                 >
                   Снять бан
                 </button>

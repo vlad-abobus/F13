@@ -47,13 +47,13 @@ export default function CommentSection({ postId }: CommentSectionProps) {
       setCaptchaError(null)
       setShowCaptcha(false)
       setShowCommentForm(false)
-      showToast('Коментар додано!', 'success')
+      showToast('Комментарий добавлен!', 'success')
     },
     onError: () => {
       setCaptchaSolution(null)
       setCaptchaQuestionId(null)
       setCaptchaError(null)
-      showToast('Помилка при додаванні коментаря', 'error')
+      showToast('Ошибка при добавлении комментария', 'error')
     },
   })
 
@@ -63,7 +63,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', postId] })
-      showToast('Лайк додано!', 'success')
+      showToast('Лайк добавлен!', 'success')
     },
   })
 
@@ -73,10 +73,10 @@ export default function CommentSection({ postId }: CommentSectionProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', postId] })
-      showToast('Коментар видалено', 'info')
+      showToast('Комментарий удален', 'info')
     },
     onError: () => {
-      showToast('Помилка при видаленні коментаря', 'error')
+      showToast('Ошибка при удалении комментария', 'error')
     },
   })
 
@@ -85,7 +85,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
     if (!newComment.trim() || !isAuthenticated) return
 
     if (!captchaSolution || !captchaQuestionId) {
-      setCaptchaError('Будь ласка, розв\'яжіть CAPTCHA')
+      setCaptchaError('Пожалуйста, решите CAPTCHA')
       setShowCaptcha(true)
       return
     }
@@ -112,7 +112,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
               </div>
             }
           />
-          <span className="font-bold">{comment.author?.username || 'Анонім'}</span>
+          <span className="font-bold">{comment.author?.username || 'Аноним'}</span>
           <span className="text-sm text-gray-400">
             {format(new Date(comment.created_at), 'dd.MM.yyyy HH:mm')}
           </span>
@@ -133,15 +133,15 @@ export default function CommentSection({ postId }: CommentSectionProps) {
               onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
               className="hover:underline"
             >
-              Відповісти
+              Ответить
             </button>
           )}
           {canDelete && (
             <button
               onClick={() => deleteCommentMutation.mutate(comment.id)}
-              className="text-red-400 hover:underline"
+              className="text-gray-300 hover:underline"
             >
-              Видалити
+              Удалить
             </button>
           )}
         </div>
@@ -152,7 +152,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               className="w-full px-4 py-2 bg-black border-2 border-white text-white min-h-[60px]"
-              placeholder="Відповідь..."
+              placeholder="Ответ..."
             />
             
             {/* CAPTCHA for reply */}
@@ -171,7 +171,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                   }}
                 />
                 {captchaError && (
-                  <p className="text-red-400 mt-2 text-sm">{captchaError}</p>
+                  <p className="text-gray-300 mt-2 text-sm">{captchaError}</p>
                 )}
               </div>
             )}
@@ -182,7 +182,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                 disabled={!newComment.trim() || createCommentMutation.isPending || !captchaSolution || !captchaQuestionId}
                 className="px-4 py-1 bg-white text-black font-bold hover:bg-gray-200 disabled:opacity-50"
               >
-                Відправити
+                Отправить
               </button>
               <button
                 type="button"
@@ -195,7 +195,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                 }}
                 className="px-4 py-1 border-2 border-white hover:bg-white hover:text-black"
               >
-                Скасувати
+                Отменить
               </button>
             </div>
           </form>
@@ -215,13 +215,13 @@ export default function CommentSection({ postId }: CommentSectionProps) {
   return (
     <div className="mt-8">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold">Коментарі</h2>
+        <h2 className="text-2xl font-bold">Комментарии</h2>
         {isAuthenticated && !showCommentForm && (
           <button
             onClick={() => setShowCommentForm(true)}
             className="px-3 py-1 text-sm bg-white text-black font-bold hover:bg-gray-200"
           >
-            💬 Коментувати
+            🗤 Комментировать
           </button>
         )}
       </div>
@@ -232,7 +232,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             className="w-full px-4 py-2 bg-black border-2 border-white text-white min-h-[100px]"
-            placeholder="Додати коментар..."
+            placeholder="Добавить комментарий..."
           />
           
           {/* CAPTCHA Section with Collapse */}
@@ -242,7 +242,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
               onClick={() => setShowCaptcha(!showCaptcha)}
             >
               <div className="flex items-center justify-between">
-                <span className="font-bold">🔒 CAPTCHA (захист від ботів)</span>
+                <span className="font-bold">🔒 CAPTCHA (защита от ботов)</span>
                 <span className="text-xl">{showCaptcha ? '▲' : '▼'}</span>
               </div>
             </div>
@@ -261,7 +261,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                   }}
                 />
                 {captchaError && (
-                  <p className="text-red-400 mt-2 text-sm">{captchaError}</p>
+                  <p className="text-gray-300 mt-2 text-sm">{captchaError}</p>
                 )}
               </div>
             )}
@@ -273,7 +273,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
               disabled={!newComment.trim() || createCommentMutation.isPending || !captchaSolution || !captchaQuestionId}
               className="px-6 py-2 bg-white text-black font-bold hover:bg-gray-200 disabled:opacity-50"
             >
-              {createCommentMutation.isPending ? 'Відправка...' : 'Коментувати'}
+              {createCommentMutation.isPending ? 'Отправка...' : 'Комментировать'}
             </button>
             <button
               type="button"
@@ -287,20 +287,20 @@ export default function CommentSection({ postId }: CommentSectionProps) {
               }}
               className="px-4 py-2 border-2 border-white hover:bg-white hover:text-black"
             >
-              Скасувати
+              Отменить
             </button>
           </div>
         </form>
       )}
 
       {!isAuthenticated && (
-        <p className="mb-4 text-gray-400">Увійдіть, щоб коментувати</p>
+        <p className="mb-4 text-gray-400">Войдите, чтобы комментировать</p>
       )}
 
       <div>
         {comments?.map((comment: any) => renderComment(comment))}
         {(!comments || comments.length === 0) && (
-          <p className="text-gray-400">Поки що немає коментарів</p>
+          <p className="text-gray-400">Пока что нет комментариев</p>
         )}
       </div>
     </div>

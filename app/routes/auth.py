@@ -1,8 +1,8 @@
 """
-Authentication routes
+Маршруты аутентификации
 """
 from flask import Blueprint, request, jsonify
-from app import db
+from app import db, limiter
 from app.models.user import User
 from app.utils.password import hash_password, verify_password
 from app.utils.jwt import generate_tokens
@@ -15,9 +15,10 @@ import traceback
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/register', methods=['POST'])
+@limiter.limit("5 per minute")  # Ограничение частоты регистрации для предотвращения злоупотреблений
 @verify_captcha
 def register():
-    """User registration"""
+    """Регистрация пользователя"""
 
     try:
         data = request.get_json()
@@ -27,16 +28,16 @@ def register():
         password = data.get('password')
         
         if not username or not email or not password:
-            return jsonify({'error': 'Missing required fields'}), 400
+            return jsonify({'error': 'Отсутствуют обязательные поля'}), 400
         
         if len(password) < 6:
-            return jsonify({'error': 'Password must be at least 6 characters'}), 400
+            return jsonify({'error': 'Пароль должен быть не менее 6 символов'}), 400
 
         if User.query.filter_by(username=username).first():
-            return jsonify({'error': 'Username already exists'}), 400
+            return jsonify({'error': 'Имя пользователя уже существует'}), 400
         
         if User.query.filter_by(email=email).first():
-            return jsonify({'error': 'Email already exists'}), 400
+            return jsonify({'error': 'Email уже существует'}), 400
 
         user = User(
             id=str(uuid.uuid4()),
@@ -57,12 +58,13 @@ def register():
         }), 201
     except Exception as e:
         
-        return jsonify({'error': 'Registration failed', 'details': str(e)}), 500
+        return jsonify({'error': 'Ошибка регистрации', 'details': str(e)}), 500
 
 @auth_bp.route('/login', methods=['POST'])
+@limiter.limit("10 per minute")  # Ограничение попыток входа на IP
 @verify_captcha
 def login():
-    """User login"""
+    """Вход пользователя"""
 
     try:
         data = request.get_json()
@@ -71,15 +73,15 @@ def login():
         password = data.get('password')
         
         if not username or not password:
-            return jsonify({'error': 'Missing credentials'}), 400
+            return jsonify({'error': 'Отсутствуют учетные данные'}), 400
 
         user = User.query.filter_by(username=username).first()
 
         if not user or not verify_password(password, user.password_hash):
-            return jsonify({'error': 'Invalid credentials'}), 401
+            return jsonify({'error': 'Неверные учетные данные'}), 401
         
         if user.is_banned:
-            return jsonify({'error': 'Account is banned'}), 403
+            return jsonify({'error': 'Учетная запись заблокирована'}), 403
 
         access_token, refresh_token = generate_tokens(user.id)
 
@@ -90,17 +92,18 @@ def login():
         }), 200
     except Exception as e:
         
-        return jsonify({'error': 'Login failed', 'details': str(e)}), 500
+        return jsonify({'error': 'Ошибка входа', 'details': str(e)}), 500
 
 @auth_bp.route('/refresh', methods=['POST'])
+@limiter.limit("30 per minute")  # Предотвратить злоупотребление токеном обновления
 @jwt_required(refresh=True)
 def refresh():
-    """Refresh access token"""
+    """Обновить токен доступа"""
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
     
     if not user or user.is_banned:
-        return jsonify({'error': 'Invalid token'}), 401
+        return jsonify({'error': 'Недействительный токен'}), 401
     
     access_token, _ = generate_tokens(user.id)
     
@@ -111,11 +114,11 @@ def refresh():
 @auth_bp.route('/me', methods=['GET'])
 @jwt_required()
 def get_current_user():
-    """Get current user"""
+    """Получить текущего пользователя"""
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
     
     if not user:
-        return jsonify({'error': 'User not found'}), 404
+        return jsonify({'error': 'Пользователь не найден'}), 404
     
     return jsonify(user.to_dict()), 200

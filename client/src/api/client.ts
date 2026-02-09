@@ -15,27 +15,6 @@ let refreshPromise: Promise<string> | null = null
 apiClient.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().accessToken
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/d2746ed4-c1b4-4f03-98d2-d7c2239014b6', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        location: 'client/src/api/client.ts:17',
-        message: 'Request interceptor - adding token',
-        data: {
-          has_token: !!token,
-          token_preview: token ? token.substring(0, 20) + '...' : null,
-          url: config.url,
-          is_formdata: config.data instanceof FormData,
-          has_content_type: !!config.headers['Content-Type']
-        },
-        timestamp: Date.now(),
-        sessionId: 'debug-session',
-        runId: 'run1',
-        hypothesisId: 'B'
-      })
-    }).catch(() => {})
-    // #endregion
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -46,25 +25,6 @@ apiClient.interceptors.request.use(
       // axios автоматично додасть правильний Content-Type з boundary
       delete config.headers['Content-Type']
     }
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/d2746ed4-c1b4-4f03-98d2-d7c2239014b6', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        location: 'client/src/api/client.ts:28',
-        message: 'Request interceptor - after token setup',
-        data: {
-          has_auth_header: !!config.headers.Authorization,
-          auth_header_preview: config.headers.Authorization ? config.headers.Authorization.substring(0, 30) + '...' : null,
-          has_content_type: !!config.headers['Content-Type']
-        },
-        timestamp: Date.now(),
-        sessionId: 'debug-session',
-        runId: 'run1',
-        hypothesisId: 'B'
-      })
-    }).catch(() => {})
-    // #endregion
     return config
   },
   (error) => {

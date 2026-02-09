@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react'
+import { logger } from '../utils/logger'
 
 interface Props {
   children: ReactNode
@@ -39,7 +40,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log error details for debugging
-    console.error('ErrorBoundary caught an error:', error, errorInfo)
+    logger.error('ErrorBoundary caught an error:', error, errorInfo)
     
     // Call optional error handler
     this.props.onError?.(error, errorInfo)
@@ -71,12 +72,12 @@ export class ErrorBoundary extends Component<Props, State> {
             <p className="text-gray-400 mb-6">
               Произошла ошибка при загрузке страницы. Пожалуйста, попробуйте обновить страницу.
             </p>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <details className="text-left mb-4 bg-gray-800 p-4 rounded border border-gray-700">
                 <summary className="cursor-pointer text-sm text-gray-400 mb-2">
                   Детали ошибки (только в режиме разработки)
                 </summary>
-                <pre className="text-xs text-red-400 overflow-auto">
+                <pre className="text-xs text-gray-300 overflow-auto">
                   {this.state.error.toString()}
                   {this.state.error.stack && (
                     <div className="mt-2 text-gray-500">

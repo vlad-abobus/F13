@@ -59,6 +59,12 @@ describe('UsersTab', () => {
         unbanUserMutation={createMockMutation()}
         muteUserMutation={createMockMutation()}
         unmuteUserMutation={createMockMutation()}
+        makeAdminMutation={createMockMutation()}
+        removeAdminMutation={createMockMutation()}
+        warnUserMutation={createMockMutation()}
+        kickUserMutation={createMockMutation()}
+        restrictPostingMutation={createMockMutation()}
+        allowPostingMutation={createMockMutation()}
       />
     )
 
@@ -76,6 +82,12 @@ describe('UsersTab', () => {
         unbanUserMutation={createMockMutation()}
         muteUserMutation={createMockMutation()}
         unmuteUserMutation={createMockMutation()}
+        makeAdminMutation={createMockMutation()}
+        removeAdminMutation={createMockMutation()}
+        warnUserMutation={createMockMutation()}
+        kickUserMutation={createMockMutation()}
+        restrictPostingMutation={createMockMutation()}
+        allowPostingMutation={createMockMutation()}
       />
     )
 
@@ -92,6 +104,12 @@ describe('UsersTab', () => {
         unbanUserMutation={unbanMutation}
         muteUserMutation={createMockMutation()}
         unmuteUserMutation={createMockMutation()}
+        makeAdminMutation={createMockMutation()}
+        removeAdminMutation={createMockMutation()}
+        warnUserMutation={createMockMutation()}
+        kickUserMutation={createMockMutation()}
+        restrictPostingMutation={createMockMutation()}
+        allowPostingMutation={createMockMutation()}
       />
     )
 
@@ -108,6 +126,12 @@ describe('UsersTab', () => {
         unbanUserMutation={createMockMutation()}
         muteUserMutation={muteMutation}
         unmuteUserMutation={createMockMutation()}
+        makeAdminMutation={createMockMutation()}
+        removeAdminMutation={createMockMutation()}
+        warnUserMutation={createMockMutation()}
+        kickUserMutation={createMockMutation()}
+        restrictPostingMutation={createMockMutation()}
+        allowPostingMutation={createMockMutation()}
       />
     )
 
@@ -126,6 +150,12 @@ describe('UsersTab', () => {
         unbanUserMutation={createMockMutation()}
         muteUserMutation={createMockMutation()}
         unmuteUserMutation={unmuteMutation}
+        makeAdminMutation={createMockMutation()}
+        removeAdminMutation={createMockMutation()}
+        warnUserMutation={createMockMutation()}
+        kickUserMutation={createMockMutation()}
+        restrictPostingMutation={createMockMutation()}
+        allowPostingMutation={createMockMutation()}
       />
     )
 
@@ -141,6 +171,12 @@ describe('UsersTab', () => {
         unbanUserMutation={createMockMutation()}
         muteUserMutation={createMockMutation()}
         unmuteUserMutation={createMockMutation()}
+        makeAdminMutation={createMockMutation()}
+        removeAdminMutation={createMockMutation()}
+        warnUserMutation={createMockMutation()}
+        kickUserMutation={createMockMutation()}
+        restrictPostingMutation={createMockMutation()}
+        allowPostingMutation={createMockMutation()}
       />
     )
 
@@ -159,6 +195,12 @@ describe('UsersTab', () => {
         unbanUserMutation={createMockMutation()}
         muteUserMutation={createMockMutation()}
         unmuteUserMutation={createMockMutation()}
+        makeAdminMutation={createMockMutation()}
+        removeAdminMutation={createMockMutation()}
+        warnUserMutation={createMockMutation()}
+        kickUserMutation={createMockMutation()}
+        restrictPostingMutation={createMockMutation()}
+        allowPostingMutation={createMockMutation()}
       />
     )
 
@@ -182,6 +224,12 @@ describe('UsersTab', () => {
         unbanUserMutation={createMockMutation()}
         muteUserMutation={muteMutation}
         unmuteUserMutation={createMockMutation()}
+        makeAdminMutation={createMockMutation()}
+        removeAdminMutation={createMockMutation()}
+        warnUserMutation={createMockMutation()}
+        kickUserMutation={createMockMutation()}
+        restrictPostingMutation={createMockMutation()}
+        allowPostingMutation={createMockMutation()}
       />
     )
 

@@ -1,4 +1,4 @@
-# Core Flask
+                    ьььли# Core Flask
 Flask==3.0.0
 Flask-SQLAlchemy==3.1.1
 Flask-CORS==4.0.0
@@ -28,13 +28,15 @@ bleach==6.1.0
 requests==2.31.0
 python-dotenv==1.0.0
 bcrypt==4.1.2
-g4f==0.5.7.5  # MikuGPT AI - DO NOT CHANGE
 langdetect==1.0.9
 captcha==0.5.0
 Pillow==11.3.0
 APScheduler==3.10.4
 cloudinary==1.41.0
+google-genai
+# Removed g4f and duckduckgo-search/aiohttp since Gemini (google-genai) is now the only AI provider used
 
 # Production
 gunicorn==21.2.0
 waitress==2.1.2
+     

@@ -122,6 +122,63 @@ export default function Admin() {
     },
   })
 
+  const makeAdminMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return apiClient.post(`/admin/users/${userId}/make-admin`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] })
+    },
+  })
+
+  const removeAdminMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return apiClient.post(`/admin/users/${userId}/remove-admin`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] })
+    },
+  })
+
+  const warnUserMutation = useMutation({
+    mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
+      return apiClient.post(`/admin/users/${userId}/warn`, { reason })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+    },
+  })
+
+  const kickUserMutation = useMutation({
+    mutationFn: async ({ userId, hours, reason }: { userId: string; hours: number; reason: string }) => {
+      return apiClient.post(`/admin/users/${userId}/kick`, { hours, reason })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] })
+    },
+  })
+
+  const restrictPostingMutation = useMutation({
+    mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
+      return apiClient.post(`/admin/users/${userId}/restrict-posting`, { reason })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+    },
+  })
+
+  const allowPostingMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return apiClient.post(`/admin/users/${userId}/allow-posting`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+    },
+  })
+
   const approvePostMutation = useMutation({
     mutationFn: async (postId: string) => {
       return apiClient.post(`/admin/posts/${postId}/approve`)
@@ -222,6 +279,12 @@ export default function Admin() {
             unbanUserMutation={unbanUserMutation}
             muteUserMutation={muteUserMutation}
             unmuteUserMutation={unmuteUserMutation}
+            makeAdminMutation={makeAdminMutation}
+            removeAdminMutation={removeAdminMutation}
+            warnUserMutation={warnUserMutation}
+            kickUserMutation={kickUserMutation}
+            restrictPostingMutation={restrictPostingMutation}
+            allowPostingMutation={allowPostingMutation}
           />
         )}
         {activeTab === 'posts' && (

@@ -50,6 +50,17 @@ class Config:
     MAX_FILE_SIZE = int(os.environ.get('MAX_FILE_SIZE', 5242880))  # 5MB
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
     
+    # Spam prevention - cooldown settings (in seconds)
+    POST_COOLDOWN = int(os.environ.get('POST_COOLDOWN', 30))  # 30 seconds between posts
+    COMMENT_COOLDOWN = int(os.environ.get('COMMENT_COOLDOWN', 10))  # 10 seconds between comments
+    
+    # Spam detection settings
+    SPAM_MAX_URLS_PER_POST = int(os.environ.get('SPAM_MAX_URLS_PER_POST', 2))
+    SPAM_MAX_URLS_PER_COMMENT = int(os.environ.get('SPAM_MAX_URLS_PER_COMMENT', 1))
+    SPAM_KEYWORD_THRESHOLD = int(os.environ.get('SPAM_KEYWORD_THRESHOLD', 2))  # Warn at this score
+    SPAM_FLAG_THRESHOLD = int(os.environ.get('SPAM_FLAG_THRESHOLD', 7))  # Flag for moderation at this score
+    DUPLICATE_CHECK_MINUTES = int(os.environ.get('DUPLICATE_CHECK_MINUTES', 5))  # Check last N minutes
+    
     # Cloudinary configuration
     # Підтримка CLOUDINARY_URL (формат: cloudinary://api_key:api_secret@cloud_name)
     # або окремі змінні для зворотної сумісності

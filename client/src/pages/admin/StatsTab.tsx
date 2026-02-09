@@ -26,11 +26,11 @@ export default function StatsTab({ stats }: StatsTabProps) {
             </div>
             <div className="flex justify-between">
               <span>Забаненных:</span>
-              <span className="font-bold text-red-400">{stats.users?.banned || 0}</span>
+              <span className="font-bold text-gray-300">{stats.users?.banned || 0}</span>
             </div>
             <div className="flex justify-between">
               <span>Замученных:</span>
-              <span className="font-bold text-yellow-400">{stats.users?.muted || 0}</span>
+              <span className="font-bold text-gray-300">{stats.users?.muted || 0}</span>
             </div>
           </div>
         </div>
@@ -43,7 +43,7 @@ export default function StatsTab({ stats }: StatsTabProps) {
             </div>
             <div className="flex justify-between">
               <span>На модерации:</span>
-              <span className="font-bold text-yellow-400">{stats.posts?.pending_moderation || 0}</span>
+              <span className="font-bold text-gray-300">{stats.posts?.pending_moderation || 0}</span>
             </div>
             <div className="flex justify-between">
               <span>Всего комментариев:</span>

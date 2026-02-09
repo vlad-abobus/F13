@@ -129,7 +129,7 @@ export default function ProfileSettings() {
             className="w-full px-4 py-2 bg-black border-2 border-white text-white min-h-[100px]"
             placeholder="О себе..."
           />
-          {errors.bio && <p className="text-red-500 mt-1">{errors.bio.message}</p>}
+          {errors.bio && <p className="text-gray-300 mt-1">{errors.bio.message}</p>}
         </div>
 
         <button

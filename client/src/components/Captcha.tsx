@@ -19,7 +19,7 @@ export default function Captcha({ onVerify, onError }: CaptchaProps) {
       setCaptchaData(response.data)
       setAnswer('')
     } catch (error: any) {
-      onError?.(error.response?.data?.error || 'Failed to load CAPTCHA')
+      onError?.(error.response?.data?.error || 'Не удалось загрузить CAPTCHA')
     } finally {
       setLoading(false)
     }
@@ -31,14 +31,14 @@ export default function Captcha({ onVerify, onError }: CaptchaProps) {
 
   const handleSubmit = () => {
     if (!captchaData || !answer.trim()) {
-      onError?.('Please enter CAPTCHA answer')
+      onError?.('Пожалуйста, введите ответ CAPTCHA')
       return
     }
     onVerify(captchaData.token, answer)
   }
 
   if (loading || !captchaData) {
-    return <div className="p-4 border-2 border-white">Завантаження CAPTCHA...</div>
+    return <div className="p-4 border-2 border-white">Загружениe CAPTCHA...</div>
   }
 
   return (
@@ -48,7 +48,7 @@ export default function Captcha({ onVerify, onError }: CaptchaProps) {
           src={captchaData.image_url}
           alt="CAPTCHA"
           className="border-2 border-white"
-          onError={() => onError?.('Failed to load CAPTCHA image')}
+          onError={() => onError?.(('Не удалось загрузить изображение CAPTCHA'))}
         />
       </div>
       <div className="flex gap-2">

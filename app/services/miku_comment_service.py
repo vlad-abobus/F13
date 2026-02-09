@@ -1,12 +1,12 @@
 """
-Miku Auto Comment Service
-Generates comments on Miku's own posts once per day
+Сервис автоматических комментариев Miku
+Генерирует комментарии к собственным постам один раз в день
 """
 from app import db
 from app.models.post import Post
 from app.models.comment import Comment
 from app.models.user import User
-# MikuInteraction is no longer used - interactions are not saved
+# MikuInteraction больше не используется - взаимодействия не сохраняются
 from app.models.miku_settings import MikuSettings
 from app.services.miku_service import MikuService
 from datetime import datetime, timedelta
@@ -14,27 +14,27 @@ import uuid
 import random
 
 class MikuCommentService:
-    """Service for Miku to automatically comment on her own posts"""
+    """Сервис для автоматических комментариев Miku к постам"""
     
     def __init__(self):
         self.miku_service = MikuService()
         
-        # Different personalities for different days of week
+        # Разные личности для разных дней недели
         self.day_personalities = {
-            0: 'Дередере',  # Monday
-            1: 'Цундере',  # Tuesday
-            2: 'Дандере',  # Wednesday
-            3: 'Яндере',  # Thursday
-            4: 'Кудере',  # Friday
-            5: 'Дередере',  # Saturday
-            6: 'Дередере',  # Sunday
+            0: 'Дередере',  # Понедельник
+            1: 'Цундере',  # Вторник
+            2: 'Дандере',  # Среда
+            3: 'Яндере',  # Четверг
+            4: 'Кудере',  # Пятница
+            5: 'Дередере',  # Суббота
+            6: 'Дередере',  # Воскресенье
         }
     
     def get_miku_user(self):
-        """Get or create Miku user account"""
+        """Получить или создать учетную запись пользователя Miku"""
         miku = User.query.filter_by(username='MikuGPT').first()
         if not miku:
-            # Create Miku user if doesn't exist
+            # Создать пользователя Miku если его нет
             from app.utils.password import hash_password
             miku = User(
                 id=str(uuid.uuid4()),
@@ -43,14 +43,14 @@ class MikuCommentService:
                 password_hash=hash_password('miku_secret_password'),
                 status='verified',
                 verification_type='purple',
-                bio='🎵 AI Assistant powered by GPT-4 🎵'
+                bio='🎵 AI помощник на базе GPT-4 🎵'
             )
             db.session.add(miku)
             db.session.commit()
         return miku
     
     def get_personality_for_today(self):
-        """Get personality based on day of week or settings override"""
+        """Получить личность на основе дня недели или переопределения настроек"""
         settings = MikuSettings.get_settings()
         if settings.personality_override:
             return settings.personality_override
@@ -59,7 +59,7 @@ class MikuCommentService:
         return self.day_personalities.get(day_of_week, 'Дередере')
     
     def has_commented_today(self, post_id: str, miku_user_id: str) -> bool:
-        """Check if Miku has already commented on this post today"""
+        """Проверить, прокомментировала ли Miku этот пост сегодня"""
         today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         
         existing_comment = Comment.query.filter_by(
@@ -72,7 +72,7 @@ class MikuCommentService:
         return existing_comment is not None
     
     def get_previous_comments_for_learning(self, limit: int = 10):
-        """Get previous comments from Miku to learn from"""
+        """Получить предыдущие комментарии Miku для обучения"""
         comments = Comment.query.join(User).filter(
             User.username == 'MikuGPT'
         ).order_by(Comment.created_at.desc()).limit(limit).all()
@@ -80,124 +80,198 @@ class MikuCommentService:
         return [c.content for c in comments]
     
     def generate_comment(self, post_content: str, personality: str) -> str:
-        """Generate a comment based on post content"""
-        # Get previous comments for context
+        """Генерировать комментарий на основе содержания поста"""
+        # Получить предыдущие комментарии для контекста
         previous_comments = self.get_previous_comments_for_learning(5)
         context = "\n".join(previous_comments[-3:]) if previous_comments else ""
         
-        # Create prompt for Miku
-        prompt = f"""Ты комментируешь свой собственный пост. 
+        # Ограничить содержание поста для промпта
+        post_preview = post_content[:300] if post_content else "пост"
+        
+        # Создать промпт для Miku
+        prompt = f"""Ты комментариуешь пост одного из пользователей сайта. 
 
-Пост: {post_content[:500]}
+Пост: {post_preview}
 
 Твоя задача:
 - Написать короткий комментарий (1-3 предложения)
 - Быть в характере {personality}
 - Показать интерес к посту
 - Использовать эмодзи если уместно
+- НЕ повторять предыдущие комментарии
 
-Предыдущие комментарии для контекста:
+Предыдущие примеры твоих комментариев:
 {context}
 
-Напиши комментарий:"""
+Напиши новый комментарий:"""
         
         try:
             response = self.miku_service.generate_response(
                 user_id=self.get_miku_user().id,
                 message=prompt,
                 personality=personality,
-                emotion_set='A',
                 flirt_enabled=False,
                 nsfw_enabled=False,
                 rp_enabled=False
             )
             
-            comment_text = response.get('response', 'Цікавий пост! ♪')
-            # Limit comment length
+            comment_text = response.get('response', '').strip() if response else ''
+            
+            # Убедиться, что у нас есть комментарий
+            if not comment_text or len(comment_text.strip()) == 0:
+                fallback_comments = {
+                    'Дередере': 'Интересный пост! ♪',
+                    'Цундере': 'Хм... неплохо.',
+                    'Дандере': '...интересно...',
+                    'Яндере': 'Очень интересно...',
+                    'Кудере': 'Неплохо написано.'
+                }
+                comment_text = fallback_comments.get(personality, 'Интересный пост!')
+            
+            # Ограничить длину комментария
             if len(comment_text) > 500:
-                comment_text = comment_text[:500] + '...'
+                comment_text = comment_text[:497] + '...'
             
             return comment_text
         except Exception as e:
-            # Fallback comment
+            # Резервный комментарий при любой ошибке
             fallback_comments = {
-                'Дередере': 'Цікавий пост! ♪',
-                'Цундере': 'Хм... непогано.',
-                'Дандере': '...цікаво...',
-                'Яндере': 'Дуже цікаво...',
-                'Кудере': 'Непогано написано.'
+                'Дередере': 'Интересный пост! ♪',
+                'Цундере': 'Хм... неплохо.',
+                'Дандере': '...интересно...',
+                'Яндере': 'Очень интересно...',
+                'Кудере': 'Неплохо написано.'
             }
-            return fallback_comments.get(personality, 'Цікавий пост!')
+            return fallback_comments.get(personality, 'Интересный пост!')
     
-    def comment_on_own_posts(self):
-        """Comment on Miku's own posts based on settings"""
+    def comment_on_single_post(self, post_id: str) -> bool:
+        """
+        Немедленно прокомментировать одинарный пост.
+        Используется для автоматических комментариев при создании нового поста.
+        """
         settings = MikuSettings.get_settings()
         
-        # Check if enabled
+        # Проверить если включено
+        if not settings.is_enabled:
+            return False
+        
+        # Проверить ежедневный лимит
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_comments = Comment.query.join(User).filter(
+            User.username == 'MikuGPT',
+            Comment.created_at >= today_start
+        ).count()
+        
+        if today_comments >= settings.max_comments_per_day:
+            return False
+        
+        miku_user = self.get_miku_user()
+        
+        # Проверить, если уже прокомментировано на этот пост
+        if self.has_commented_today(post_id, miku_user.id):
+            return False
+        
+        post = Post.query.get(post_id)
+        if not post or post.is_deleted or post.moderation_status != 'approved':
+            return False
+        
+        # Не комментировать собственные посты Miku
+        if post.user_id == miku_user.id:
+            return False
+        
+        personality = self.get_personality_for_today()
+        comment_text = self.generate_comment(post.content, personality)
+        
+        # Создать комментарий
+        comment = Comment(
+            id=str(uuid.uuid4()),
+            post_id=post.id,
+            user_id=miku_user.id,
+            content=comment_text,
+            parent_id=None
+        )
+        
+        post.comments_count += 1
+        db.session.add(comment)
+        db.session.commit()
+        
+        return True
+    
+    def comment_on_own_posts(self):
+        """
+        Комментировать недавние одобренные посты на основе настроек.
+
+        Исторически этот метод работал только с постами самой Miku,
+        теперь он проходит по всем не удаленным, одобренным постам
+        (кроме постов MikuGPT), чтобы Miku могла участвовать в жизни сообщества.
+        """
+        settings = MikuSettings.get_settings()
+        
+        # Проверить если включено
         if not settings.is_enabled:
             return 0
-        
-        # Check if should run today
-        day_of_week = str(datetime.utcnow().weekday())
-        if day_of_week not in settings.enabled_days:
-            return 0
-        
-        # Check interval (if last run was too recent)
-        if settings.last_run_at:
-            hours_since_last_run = (datetime.utcnow() - settings.last_run_at).total_seconds() / 3600
-            if hours_since_last_run < settings.comment_interval_hours:
-                return 0
         
         miku_user = self.get_miku_user()
         personality = self.get_personality_for_today()
         
-        # Get Miku's posts from last N days (from settings)
-        days_ago = datetime.utcnow() - timedelta(days=settings.posts_age_days)
+        # Получить посты за последние 7 дней
+        days_ago = datetime.utcnow() - timedelta(days=7)
         today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         
-        miku_posts = Post.query.filter_by(
-            user_id=miku_user.id,
-            is_deleted=False,
-            moderation_status='approved'
-        ).filter(
-            Post.created_at >= days_ago
-        ).order_by(Post.created_at.desc()).limit(settings.max_comments_per_day).all()
+        # Берем одобренные посты любых пользователей, кроме самой Miku,
+        # за последние 7 дней
+        miku_posts = (
+            Post.query.filter_by(
+                is_deleted=False,
+                moderation_status='approved',
+            )
+            .filter(Post.user_id != miku_user.id)
+            .filter(Post.created_at >= days_ago)
+            .order_by(Post.created_at.desc())
+            .limit(settings.max_comments_per_day)
+            .all()
+        )
+        
+        # Считать комментарии за сегодня
+        today_comments = Comment.query.join(User).filter(
+            User.username == 'MikuGPT',
+            Comment.created_at >= today_start
+        ).count()
         
         commented_count = 0
         
         for post in miku_posts:
-            # Check if already commented today
+            # Проверить ежедневный лимит
+            if today_comments + commented_count >= settings.max_comments_per_day:
+                break
+            
+            # Проверить, если уже прокомментировано сегодня
             if self.has_commented_today(post.id, miku_user.id):
                 continue
             
-            # Check daily limit
-            if commented_count >= settings.max_comments_per_day:
-                break
-            
-            # Generate comment
+            # Создать комментарий с надлежащей проверкой
             comment_text = self.generate_comment(post.content, personality)
+            if not comment_text or len(comment_text.strip()) < 1:
+                continue
             
-            # Create comment
             comment = Comment(
                 id=str(uuid.uuid4()),
                 post_id=post.id,
                 user_id=miku_user.id,
-                content=comment_text,
+                content=comment_text.strip(),
                 parent_id=None
             )
             
             post.comments_count += 1
             db.session.add(comment)
             commented_count += 1
-            
-            # Interactions are NOT saved to database
         
-        # Update settings
+        # Обновить настройки
         settings.last_run_at = datetime.utcnow()
         settings.last_comments_count = commented_count
         db.session.commit()
         
         return commented_count
 
-# Global instance
+# Глобальный экземпляр
 miku_comment_service = MikuCommentService()

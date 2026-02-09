@@ -90,8 +90,8 @@ export default function SimpleCaptcha({ onSolution, onError }: SimpleCaptchaProp
 
   if (error && !question) {
     return (
-      <div className="my-4 p-4 border-2 border-red-500 bg-black">
-        <div className="text-red-500 mb-2">{error}</div>
+      <div className="my-4 p-4 border-2 border-gray-600 bg-black">
+        <div className="text-gray-300 mb-2">{error}</div>
         <button
           type="button"
           onClick={loadQuestion}
@@ -141,11 +141,11 @@ export default function SimpleCaptcha({ onSolution, onError }: SimpleCaptchaProp
         </div>
         
         {error && (
-          <div className="text-red-500 text-sm">{error}</div>
+          <div className="text-gray-300 text-sm">{error}</div>
         )}
         
         {isVerified && (
-          <div className="text-green-500 text-sm">✓ Капча пройдена успішно!</div>
+          <div className="text-gray-200 text-sm">✓ Капча пройдена успішно!</div>
         )}
         
         <button

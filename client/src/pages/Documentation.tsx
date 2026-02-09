@@ -122,25 +122,6 @@ export default function Documentation() {
           </div>
         </section>
 
-        {/* API */}
-        <section className="bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 rounded-2xl p-6 shadow-xl">
-          <h2 className="text-2xl font-bold mb-4 text-white">🔌 API</h2>
-          <div className="space-y-4 text-gray-300">
-            <p>
-               Инфорамация скрыта в соотвествии с законами Росийской Федерации ,  Украины . Казахстана .
-            </p>
-            <p>
-              Основные endpoints:
-            </p>
-            <ul className="list-disc list-inside space-y-1 ml-4">
-              <li><code className="bg-gray-800 px-2 py-1 rounded">-</code></li>
-              <li><code className="bg-gray-800 px-2 py-1 rounded">/api/users</code> — </li>
-              <li><code className="bg-gray-800 px-2 py-1 rounded">/api/goonzone</code> — </li>
-              <li><code className="bg-gray-800 px-2 py-1 rounded">/api/gallery</code> — </li>
-            </ul>
-          </div>
-        </section>
-
         {/* Support */}
         <section className="bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 rounded-2xl p-6 shadow-xl">
           <h2 className="text-2xl font-bold mb-4 text-white">💬 Поддержка</h2>

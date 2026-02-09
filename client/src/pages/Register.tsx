@@ -9,13 +9,13 @@ import SimpleCaptcha from '../components/SimpleCaptcha'
 import { Button, Input } from '../components/ui'
 
 const registerSchema = z.object({
-  username: z.string().min(3, 'Username must be at least 3 characters'),
-  email: z.string().email('Invalid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  username: z.string().min(3, 'Имя пользователя должно быть не менее 3 символов'),
+  email: z.string().email('Неверный адрес электронной почты'),
+  password: z.string().min(6, 'Пароль должен быть не менее 6 символов'),
   confirmPassword: z.string(),
   captcha_token: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
+  message: "Пароли не совпадают",
   path: ['confirmPassword'],
 })
 
@@ -64,7 +64,7 @@ export default function Register() {
       </div>
 
       {error && (
-        <div className="bg-red-900/50 border border-red-500 text-white p-4 mb-6 rounded-xl">
+        <div className="bg-gray-800 border border-gray-600 text-white p-4 mb-6 rounded-xl">
           {error}
         </div>
       )}

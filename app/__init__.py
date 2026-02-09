@@ -2,6 +2,7 @@
 Flask Application Factory
 """
 from flask import Flask, send_from_directory
+import os
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -40,7 +41,7 @@ def create_app(config_class):
             'script-src': "'self' 'unsafe-inline' 'unsafe-eval'",  # Для Ruffle
             'img-src': "'self' data: https: res.cloudinary.com",  # Дозволяємо зображення з Cloudinary
             'style-src': "'self' 'unsafe-inline'",
-            'connect-src': "'self' https://api.cloudinary.com",  # Дозволяємо запити до Cloudinary API
+            'connect-src': "'self' https://api.cloudinary.com http://127.0.0.1:* localhost:*",  # Дозволяємо запити до Cloudinary API та локальну телеметрію
         }
     )
     
@@ -50,15 +51,18 @@ def create_app(config_class):
             host=app.config['REDIS_HOST'],
             port=app.config['REDIS_PORT'],
             db=app.config['REDIS_DB'],
-            decode_responses=True
+            decode_responses=True,
+            socket_connect_timeout=2,
+            socket_timeout=2
         )
         redis_client.ping()
         app.config['REDIS_AVAILABLE'] = True
-    except Exception:
+    except Exception as e:
         app.config['REDIS_AVAILABLE'] = False
         redis_client = None
         # Use memory storage if Redis is not available
         app.config['RATELIMIT_STORAGE_URL'] = 'memory://'
+        app.logger.warning(f"Redis not available: {e}. Using in-memory storage.")
     
     # Limiter (rate limiting)
     # Flask-Limiter 3.x reads RATELIMIT_STORAGE_URL and RATELIMIT_DEFAULT from app.config
@@ -81,7 +85,7 @@ def create_app(config_class):
     
     # Register blueprints
     from app.routes import main, auth, posts, comments, users, miku, goonzone, gallery, flash, i18n, captcha, admin, pages
-    from app.routes import miku_auto_comment, profile_posts, upload
+    from app.routes import miku_auto_comment, profile_posts, upload, miku_admin_request, search, analytics, preferences, reports
     
     app.register_blueprint(main.main_bp)
     app.register_blueprint(auth.auth_bp, url_prefix='/api/auth')
@@ -95,10 +99,15 @@ def create_app(config_class):
     app.register_blueprint(flash.flash_bp, url_prefix='/api/flash')
     app.register_blueprint(i18n.i18n_bp, url_prefix='/api/i18n')
     app.register_blueprint(captcha.captcha_bp, url_prefix='/api/captcha')
+    app.register_blueprint(reports.reports_bp, url_prefix='/api/reports')
     app.register_blueprint(admin.admin_bp, url_prefix='/api/admin')
     app.register_blueprint(pages.pages_bp, url_prefix='/api/pages')
     app.register_blueprint(profile_posts.profile_posts_bp, url_prefix='/api/profile-posts')
     app.register_blueprint(upload.upload_bp, url_prefix='/api')
+    app.register_blueprint(miku_admin_request.miku_admin_request_bp, url_prefix='/api')
+    app.register_blueprint(search.search_bp, url_prefix='/api/search')
+    app.register_blueprint(analytics.analytics_bp, url_prefix='/api/analytics')
+    app.register_blueprint(preferences.preferences_bp, url_prefix='/api/preferences')
     
     # Static files routes (must be before React app route)
     @app.route('/ruffle/<path:filename>')
@@ -300,7 +309,9 @@ def create_app(config_class):
     # Initialize database
     with app.app_context():
         from app.database import init_db
-        init_db()
+        # Initialize DB only when not running migrations/scripts that skip it
+        if not os.environ.get('SKIP_INIT_DB'):
+            init_db()
     
     # Initialize scheduler (only in production or if enabled)
     if app.config.get('ENABLE_SCHEDULER', False):
@@ -310,5 +321,46 @@ def create_app(config_class):
             app.logger.info("✅ Scheduler initialized")
         except Exception as e:
             app.logger.warning(f"Scheduler initialization failed: {e}")
+    
+    # Error handlers to prevent 502 Bad Gateway from cloudflare
+    @app.errorhandler(500)
+    def handle_500_error(error):
+        """Handle 500 errors gracefully"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"500 Internal Server Error: {error}", exc_info=True)
+        
+        # Return a safe response instead of crashing
+        return {
+            'status': 'error',
+            'message': 'Internal server error',
+            'error': str(error)
+        }, 500
+    
+    @app.errorhandler(502)
+    def handle_502_error(error):
+        """Handle 502 errors"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"502 Bad Gateway: {error}")
+        
+        return {
+            'status': 'error',
+            'message': 'Bad Gateway - service temporarily unavailable',
+            'error': str(error)
+        }, 502
+    
+    @app.errorhandler(503)
+    def handle_503_error(error):
+        """Handle 503 errors"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"503 Service Unavailable: {error}")
+        
+        return {
+            'status': 'error',
+            'message': 'Service temporarily unavailable',
+            'error': str(error)
+        }, 503
     
     return app

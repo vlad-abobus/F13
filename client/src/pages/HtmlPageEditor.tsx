@@ -190,7 +190,7 @@ export default function HtmlPageEditor() {
                   <button
                     type="button"
                     onClick={() => deleteMutation.mutate(selectedPage.id)}
-                    className="px-4 py-2 border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                    className="px-4 py-2 border-2 border-gray-600 text-gray-300 hover:bg-gray-600 hover:text-white"
                     disabled={deleteMutation.isPending}
                   >
                     Удалить

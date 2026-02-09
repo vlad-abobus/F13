@@ -18,8 +18,13 @@ from app.models.translation import Translation
 from app.models.html_page import HtmlPage
 from app.models.ip_ban import IPBan
 from app.models.miku_settings import MikuSettings
+from app.models.moderation_log import ModerationLog
 from app.models.profile_post import ProfilePost
 from app.models.image import Image
+from app.models.ip_spam_log import IPSpamLog
+from app.models.community_rule import CommunityRule
+from app.models.user_bookmark import UserBookmark
+from app.models.user_preference import UserPreference
 
 __all__ = [
     'User',
@@ -44,6 +49,11 @@ __all__ = [
     'HtmlPage',
     'IPBan',
     'MikuSettings',
+    'ModerationLog',
     'ProfilePost',
     'Image',
+    'IPSpamLog',
+    'CommunityRule',
+    'UserBookmark',
+    'UserPreference',
 ]

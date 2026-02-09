@@ -22,8 +22,14 @@ class User(db.Model):
     activity_data = db.Column(db.String(200), nullable=True)
     language = db.Column(db.String(10), default='ru', nullable=False)  # ru, uk, kz, en
     is_banned = db.Column(db.Boolean, default=False, nullable=False)
+    ban_until = db.Column(db.DateTime, nullable=True)  # For temporary bans (kick)
     is_muted = db.Column(db.Boolean, default=False, nullable=False)
     muted_until = db.Column(db.DateTime, nullable=True)
+    can_post = db.Column(db.Boolean, default=True, nullable=False)  # Restriction: cannot post
+    warning_count = db.Column(db.Integer, default=0, nullable=False)  # Track infractions
+    admin_notes = db.Column(db.Text, nullable=True)  # Admin comments about user
+    last_post_time = db.Column(db.DateTime, nullable=True)
+    last_comment_time = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     

@@ -126,7 +126,7 @@ export default function Profile() {
               }
             />
             {user.status === 'admin' && (
-              <div className="absolute -bottom-2 -right-2 w-9 h-9 bg-red-600 rounded-full border-4 border-gray-900 flex items-center justify-center text-white text-base font-bold shadow-lg">
+              <div className="absolute -bottom-2 -right-2 w-9 h-9 bg-gray-700 rounded-full border-4 border-gray-900 flex items-center justify-center text-white text-base font-bold shadow-lg">
                 ⭐
               </div>
             )}
@@ -153,7 +153,7 @@ export default function Profile() {
             </div>
             {createdDate && (
               <div className="flex items-center gap-2">
-                <span className="text-gray-400">З нами з:</span>
+                <span className="text-gray-400">С нами с:</span>
                 <span className="font-semibold text-white">
                   {format(createdDate, 'd MMM yyyy')}
                 </span>
@@ -214,7 +214,7 @@ export default function Profile() {
             <textarea
               value={wallPostContent}
               onChange={(e) => setWallPostContent(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 text-white rounded-xl min-h-[120px] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500"
+              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 text-white rounded-xl min-h-[120px] resize-none focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent placeholder:text-gray-500"
               placeholder={isOwnProfile ? 'Что у вас на уме?' : `Написать на стене ${user.username}...`}
             />
             
@@ -244,7 +244,7 @@ export default function Profile() {
                     }}
                   />
                   {captchaError && (
-                    <p className="text-red-400 mt-2 text-sm">{captchaError}</p>
+                    <p className="text-gray-300 mt-2 text-sm">{captchaError}</p>
                   )}
                 </div>
               )}
@@ -318,7 +318,7 @@ export default function Profile() {
                           showToast('Ошибка при удалении', 'error')
                         }
                       }}
-                      className="text-gray-400 hover:text-red-400 text-sm p-1 rounded hover:bg-gray-700 transition-colors"
+                      className="text-gray-400 hover:text-gray-300 text-sm p-1 rounded hover:bg-gray-700 transition-colors"
                     >
                       ✕
                     </button>
@@ -339,9 +339,9 @@ export default function Profile() {
       {/* Posts Section */}
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Пости</h2>
+          <h2 className="text-2xl font-bold">Посты</h2>
           {postsCount > 0 && (
-            <span className="text-gray-400 text-sm">Всього: {postsCount}</span>
+            <span className="text-gray-400 text-sm">Всего: {postsCount}</span>
           )}
         </div>
 
@@ -358,7 +358,7 @@ export default function Profile() {
                   to="/"
                   className="text-white underline hover:text-gray-300"
                 >
-                  Створити перший пост
+                  Создать первый пост
                 </Link>
               )}
             </div>

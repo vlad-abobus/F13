@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+type VerificationType = 'none' | 'blue' | 'purple' | 'red'
+
 interface User {
   id: string
   username: string
@@ -8,7 +10,8 @@ interface User {
   avatar_url?: string
   bio?: string
   status: string
-  verification_type: string
+  verification_type: VerificationType
+  verification_badge?: string
   language: string
 }
 

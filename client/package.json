@@ -17,17 +17,18 @@
     "analyze": "vite build --mode analyze"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@hookform/resolvers": "^3.3.4",
+    "@tanstack/react-query": "^5.17.0",
+    "axios": "^1.6.2",
+    "date-fns": "^3.0.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.21.1",
-    "@tanstack/react-query": "^5.17.0",
-    "zustand": "^4.4.7",
-    "axios": "^1.6.2",
     "react-hook-form": "^7.49.2",
     "react-markdown": "^9.0.1",
-    "date-fns": "^3.0.6",
+    "react-router-dom": "^6.21.1",
     "zod": "^3.22.4",
-    "@hookform/resolvers": "^3.3.4"
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.1.5",
@@ -45,8 +46,8 @@
     "husky": "^9.0.11",
     "jsdom": "^23.0.1",
     "lint-staged": "^15.2.0",
-    "prettier": "^3.2.5",
     "postcss": "^8.4.32",
+    "prettier": "^3.2.5",
     "rollup-plugin-visualizer": "^5.12.0",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.3",
