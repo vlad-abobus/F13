@@ -17,18 +17,8 @@ See `README_HF.md` for detailed deployment instructions and notes about the full
 Important:
 - Add the secret `GOOGLE_API_KEY` in Settings → Secrets for Gemini integration.
 - `app.py` is the Gradio entrypoint used by Hugging Face Spaces.
+# `app.py` is the Gradio entrypoint used by Hugging Face Spaces.
 # Freedom13 (F13) - Соціальна Платформа
-
----
-title: Freedom13
-emoji: "🤖"
-colorFrom: "purple"
-colorTo: "pink"
-sdk: gradio
-sdk_version: "latest"
-app_file: app.py
-pinned: false
----
 
 **Freedom13** - сучасна соціальна платформа, що поєднує функціонал Twitter-подібного мікроблогу з форумом, галереєю, Flash іграми та AI чат-ботом (MikuGPT).
 
