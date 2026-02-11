@@ -77,6 +77,14 @@ cp space_requirements.txt requirements.txt
 
 - `GOOGLE_API_KEY` — ваш API-ключ Google GenAI (Gemini)
 
+Optional: run full backend
+
+- If you want the Gradio wrapper to start the full Flask backend (initializing DB/Redis/etc), set the environment variable `START_FULL_BACKEND` to `true` in your Space settings. By default the wrapper sets `SKIP_INIT_DB=1` to avoid initializing services in the restricted Spaces environment.
+
+   Example (Spaces Secrets / Environment Variables):
+
+   - `START_FULL_BACKEND=true`  # starts full backend (only if you have DB/Redis configured)
+
 7) Commit & push (якщо робите локальні зміни):
 
 ```bash
