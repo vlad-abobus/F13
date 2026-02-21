@@ -38,44 +38,57 @@ export default function MikuTab({
 
   return (
     <div className="space-y-6">
-      <div className="border-2 border-white bg-black rounded-xl p-6">
-        <h2 className="text-2xl font-bold mb-4">🎵 Налаштування авто-коментування Miku</h2>
+      {/* Miku Settings */}
+      <div className="bg-gradient-to-br from-cyan-900/20 to-blue-900/20 border border-cyan-700/30 rounded-2xl p-6 backdrop-blur">
+        <h2 className="text-2xl font-bold mb-6 text-white flex items-center gap-2">
+          <span>🎵</span> Налаштування авто-коментування Miku
+        </h2>
 
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={mikuSettingsForm.is_enabled}
-                onChange={(e) =>
-                  setMikuSettingsForm({ ...mikuSettingsForm, is_enabled: e.target.checked })
-                }
-                className="w-5 h-5"
-              />
-              <span className="font-bold">Включити авто-коментування</span>
+        <div className="space-y-6">
+          {/* Enable/Disable */}
+          <div className="flex items-center gap-4 p-4 bg-gray-800/30 rounded-xl border border-gray-700">
+            <label className="flex items-center gap-3 cursor-pointer flex-1">
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={mikuSettingsForm.is_enabled}
+                  onChange={(e) =>
+                    setMikuSettingsForm({ ...mikuSettingsForm, is_enabled: e.target.checked })
+                  }
+                  className="w-5 h-5 accent-cyan-500"
+                />
+              </div>
+              <span className="font-semibold text-white">Активувати авто-коментування Miku</span>
             </label>
+            <span className={`px-3 py-1 rounded-full text-sm font-bold ${mikuSettingsForm.is_enabled ? 'bg-green-600/30 text-green-300' : 'bg-red-600/30 text-red-300'}`}>
+              {mikuSettingsForm.is_enabled ? '🟢 Вкл' : '🔴 Вимк'}
+            </span>
           </div>
 
+          {/* Settings Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block mb-2 text-sm font-bold">Максимум коментарів на день</label>
-              <input
-                type="number"
-                value={mikuSettingsForm.max_comments_per_day}
-                onChange={(e) =>
-                  setMikuSettingsForm({
-                    ...mikuSettingsForm,
-                    max_comments_per_day: Number(e.target.value),
-                  })
-                }
-                className="w-full px-4 py-2 bg-black border-2 border-white text-white rounded-lg"
-                min="1"
-                max="20"
-              />
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-300">Максимум коментарів на день</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={mikuSettingsForm.max_comments_per_day}
+                  onChange={(e) =>
+                    setMikuSettingsForm({
+                      ...mikuSettingsForm,
+                      max_comments_per_day: Number(e.target.value),
+                    })
+                  }
+                  className="flex-1 px-4 py-3 bg-gray-700/50 border border-gray-600 focus:border-cyan-500 text-white rounded-lg focus:outline-none transition"
+                  min="1"
+                  max="50"
+                />
+                <span className="text-gray-400 text-sm">шт.</span>
+              </div>
             </div>
 
-            <div>
-              <label className="block mb-2 text-sm font-bold">Хартер Miku</label>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-300">Характер Miku</label>
               <select
                 value={mikuSettingsForm.personality_override}
                 onChange={(e) =>
@@ -84,63 +97,76 @@ export default function MikuTab({
                     personality_override: e.target.value,
                   })
                 }
-                className="w-full px-4 py-2 bg-black border-2 border-white text-white rounded-lg"
+                className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 focus:border-cyan-500 text-white rounded-lg focus:outline-none transition"
               >
-                <option value="">Автоматично (по дню тижня)</option>
-                <option value="Дередере">Дередере</option>
-                <option value="Цундере">Цундере</option>
-                <option value="Дандере">Дандере</option>
-                <option value="Яндере">Яндере</option>
-                <option value="Кудере">Кудере</option>
+                <option value="">🎲 Автоматично (по дню тижня)</option>
+                <option value="Дередере">😊 Дередере</option>
+                <option value="Цундере">😠 Цундере</option>
+                <option value="Дандере">😢 Дандере</option>
+                <option value="Яндере">💗 Яндере</option>
+                <option value="Кудере">😌 Кудере</option>
               </select>
             </div>
           </div>
 
-          <div className="flex gap-4">
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4 border-t border-gray-700">
             <button
               onClick={() => updateMikuSettingsMutation.mutate(mikuSettingsForm)}
               disabled={updateMikuSettingsMutation.isPending}
-              className="px-6 py-3 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 disabled:opacity-50"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold rounded-lg transition flex items-center justify-center gap-2"
             >
-              {updateMikuSettingsMutation.isPending ? 'Збереження...' : '💾 Зберегти'}
+              {updateMikuSettingsMutation.isPending ? '⏳ Збереження...' : '💾 Зберегти'}
             </button>
 
             <button
               onClick={() => testMikuCommentMutation.mutate()}
               disabled={testMikuCommentMutation.isPending || !mikuSettingsForm.is_enabled}
-              className="px-6 py-3 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 disabled:opacity-50"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold rounded-lg transition flex items-center justify-center gap-2"
             >
-              {testMikuCommentMutation.isPending ? 'Тестування...' : '▶️ Тест'}
+              {testMikuCommentMutation.isPending ? '⏳ Тестування...' : '▶️ Тестовий коментар'}
             </button>
           </div>
         </div>
       </div>
 
+      {/* Statistics */}
       {mikuSettings && (
-        <div className="border-2 border-white bg-black rounded-xl p-6">
-          <h3 className="text-xl font-bold mb-4">📊 Статистика</h3>
+        <div className="bg-gray-900/50 border border-gray-700 rounded-2xl p-6 backdrop-blur">
+          <h3 className="text-2xl font-bold mb-6 text-white flex items-center gap-2">
+            <span>📊</span> Статистика
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <div className="text-sm text-gray-400">Последний запуск</div>
-              <div className="font-bold">
+            <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+              <div className="text-sm text-gray-400 mb-2">🕐 Останній запуск</div>
+              <div className="text-xl font-bold text-white">
                 {mikuSettings.last_run_at
-                  ? new Date(mikuSettings.last_run_at).toLocaleString('ru-RU')
-                  : 'Никогда'}
+                  ? new Date(mikuSettings.last_run_at).toLocaleString('uk-UA')
+                  : '⏳ Ніколи'}
               </div>
             </div>
-            <div>
-              <div className="text-sm text-gray-400">Последний результат</div>
-              <div className="font-bold">{mikuSettings.last_comments_count || 0} комментариев</div>
+            <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+              <div className="text-sm text-gray-400 mb-2">📝 Коментарів останньої сесії</div>
+              <div className="text-xl font-bold text-cyan-400">
+                {mikuSettings.last_comments_count || 0}
+              </div>
             </div>
           </div>
         </div>
       )}
 
+      {/* Test Result */}
       {testMikuCommentMutation.data && (
-        <div className="border-2 border-gray-600 bg-gray-900 bg-opacity-20 rounded-xl p-4">
-          <div className="font-bold text-gray-200">✅ {testMikuCommentMutation.data.data.message}</div>
-          <div className="text-sm text-gray-400 mt-2">
-            Характер: {testMikuCommentMutation.data.data.personality}
+        <div className="bg-gradient-to-br from-green-900/20 to-emerald-900/20 border border-green-600/30 rounded-2xl p-6">
+          <div className="flex items-start gap-4">
+            <div className="text-3xl">✅</div>
+            <div className="flex-1">
+              <div className="font-bold text-green-300 mb-2">{testMikuCommentMutation.data.data.message}</div>
+              <div className="text-sm text-gray-300">
+                <span className="text-gray-400">Характер: </span>
+                <span className="font-bold text-cyan-300">{testMikuCommentMutation.data.data.personality}</span>
+              </div>
+            </div>
           </div>
         </div>
       )}

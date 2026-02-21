@@ -9,8 +9,8 @@ import SimpleCaptcha from '../components/SimpleCaptcha'
 import { Button, Input } from '../components/ui'
 
 const loginSchema = z.object({
-  username: z.string().min(1, 'Требуется имя пользователя'),
-  password: z.string().min(1, 'Требуется пароль'),
+  username: z.string().min(1, 'Имя обязательно'),
+  password: z.string().min(1, 'Пароль обязательно'),
   captcha_token: z.string().optional(),
 })
 
@@ -83,7 +83,7 @@ export default function Login() {
 
           <div className="bg-gray-800/30 p-4 rounded-xl border border-gray-700">
             <label className="block mb-3 text-sm font-semibold text-gray-300">
-              🔒 CAPTCHA (защита от ботов)
+              <img src="/icons/icons8-замок-50.png" alt="Lock" className="w-4 h-4 inline mr-1" /> CAPTCHA (защита от ботов)
             </label>
             <SimpleCaptcha
               onSolution={(solution, questionId) => {

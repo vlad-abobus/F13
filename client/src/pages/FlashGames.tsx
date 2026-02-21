@@ -124,7 +124,7 @@ export default function FlashGames() {
           if (!window.RufflePlayer) {
             logger.error('RufflePlayer is not available')
             if (gameContainerRef.current) {
-              gameContainerRef.current.innerHTML = '<p class="text-gray-300 text-center py-8">Ruffle плеер не загружен. Перезагрузите страницу.</p>'
+              gameContainerRef.current.innerHTML = '<p class="text-gray-300 text-center py-8">Ошибка плеера</p>'
             }
             return
           }
@@ -327,7 +327,7 @@ export default function FlashGames() {
           ) : (
             <div className="border-2 border-white p-8 text-center">
               <p className="text-gray-400 text-lg">
-                Выберите игру из списка слева, чтобы начать играть
+                Выберите игру
               </p>
             </div>
           )}

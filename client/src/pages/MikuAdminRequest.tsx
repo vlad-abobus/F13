@@ -52,7 +52,7 @@ export default function MikuAdminRequest() {
       const msg =
         error?.response?.data?.error ||
         error?.message ||
-        'Не удалось отправить запрос администрации'
+        'Ошибка'
       showToast(msg, 'error')
     },
   })
@@ -78,10 +78,9 @@ export default function MikuAdminRequest() {
   return (
     <div className="max-w-2xl mx-auto px-4">
       <div className="border-2 border-white bg-black rounded-xl p-6 mb-6">
-        <h1 className="text-2xl font-bold mb-2">🎵 Запрос администрации с помощью MikuGPT</h1>
+        <h1 className="text-2xl font-bold mb-2">🎵 Админ запрос</h1>
         <p className="text-gray-400 text-sm">
-          Опишите проблему, и MikuGPT подготовит краткое заключение и рекомендацию для администраторов. Окончательное
-          решение остается за живой администрацией.
+          Описание
         </p>
       </div>
 
@@ -124,7 +123,7 @@ export default function MikuAdminRequest() {
         </div>
 
         <div>
-          <label className="block mb-1 text-sm font-semibold text-gray-200">Описание ситуации</label>
+          <label className="block mb-1 text-sm font-semibold text-gray-200">Описание</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -135,7 +134,7 @@ export default function MikuAdminRequest() {
 
         <div className="pt-4 border-t border-gray-700">
           <label className="block mb-2 text-sm font-semibold text-gray-300">
-            🔒 CAPTCHA (защита от ботов)
+            <img src="/icons/icons8-замок-50.png" alt="Lock" className="w-4 h-4 inline mr-1" /> CAPTCHA
           </label>
           <div className="bg-gray-900/50 p-4 rounded-xl border border-gray-700">
             <SimpleCaptcha
@@ -159,13 +158,13 @@ export default function MikuAdminRequest() {
           disabled={mutation.isPending || !subject.trim() || !description.trim()}
           className="w-full px-6 py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 disabled:opacity-50"
         >
-          {mutation.isPending ? 'Отправка...' : 'Отправить запрос'}
+          {mutation.isPending ? 'Отправка...' : 'Отправить'}
         </button>
       </form>
 
       {mikuResponse && (
         <div className="mt-6 border-2 border-white bg-black rounded-xl p-6">
-          <h2 className="text-xl font-bold mb-3">Заключение MikuGPT для администраторов</h2>
+          <h2 className="text-xl font-bold mb-3">Заключение</h2>
           <p className="mb-2">
             <span className="font-semibold">Кратко:</span> {mikuResponse.summary || '—'}
           </p>
@@ -182,7 +181,7 @@ export default function MikuAdminRequest() {
             </p>
           )}
           <p className="mt-3 text-xs text-gray-500">
-            Окончательное решение (бан/мут и т.д.) всегда принимает живая администрация.
+            Админы принимают финальное решение
           </p>
         </div>
       )}

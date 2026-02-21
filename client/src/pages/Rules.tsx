@@ -6,7 +6,7 @@ export default function Rules() {
   const { data: rules, isLoading } = useQuery({
     queryKey: ['rules'],
     queryFn: async () => {
-      const response = await apiClient.get('/goonzone/rules')
+      const response = await apiClient.get('/rules')
       return response.data
     },
   })

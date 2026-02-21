@@ -1,7 +1,7 @@
 """
 Flask Application Factory
 """
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request
 import os
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -84,8 +84,9 @@ def create_app(config_class):
     (upload_dir / 'posts').mkdir(parents=True, exist_ok=True)
     
     # Register blueprints
-    from app.routes import main, auth, posts, comments, users, miku, goonzone, gallery, flash, i18n, captcha, admin, pages
-    from app.routes import miku_auto_comment, profile_posts, upload, miku_admin_request, search, analytics, preferences, reports
+    from app.routes import main, auth, posts, comments, users, miku, goonzone, gallery, flash, i18n, captcha, admin, pages, rules
+    from app.routes import miku_auto_comment, profile_posts, upload, miku_admin_request, search, analytics, preferences, reports, feedback
+    from app.routes import voluntary_ban
     
     app.register_blueprint(main.main_bp)
     app.register_blueprint(auth.auth_bp, url_prefix='/api/auth')
@@ -102,12 +103,15 @@ def create_app(config_class):
     app.register_blueprint(reports.reports_bp, url_prefix='/api/reports')
     app.register_blueprint(admin.admin_bp, url_prefix='/api/admin')
     app.register_blueprint(pages.pages_bp, url_prefix='/api/pages')
+    app.register_blueprint(voluntary_ban.voluntary_bp, url_prefix='/api')
     app.register_blueprint(profile_posts.profile_posts_bp, url_prefix='/api/profile-posts')
     app.register_blueprint(upload.upload_bp, url_prefix='/api')
     app.register_blueprint(miku_admin_request.miku_admin_request_bp, url_prefix='/api')
     app.register_blueprint(search.search_bp, url_prefix='/api/search')
     app.register_blueprint(analytics.analytics_bp, url_prefix='/api/analytics')
     app.register_blueprint(preferences.preferences_bp, url_prefix='/api/preferences')
+    app.register_blueprint(rules.rules_bp, url_prefix='/api/rules')
+    app.register_blueprint(feedback.feedback_bp, url_prefix='/api/feedback')
     
     # Static files routes (must be before React app route)
     @app.route('/ruffle/<path:filename>')
@@ -144,6 +148,28 @@ def create_app(config_class):
             response.headers['Content-Type'] = 'application/json'
         logger.debug(f"Ruffle file served: {filename}, MIME: {response.headers.get('Content-Type')}")
         return response
+
+    # Dynamic ban page for blocked IPs - serve before SPA
+    from app.models.ip_ban import IPBan
+    from flask import render_template
+
+    @app.before_request
+    def check_ip_ban_and_serve_page():
+        # Only apply to non-API, non-static asset requests (the SPA and page requests)
+        path = request.path or ''
+        if path.startswith('/api') or path.startswith('/ruffle') or path.startswith('/games') or path.startswith('/uploads') or path.startswith('/static') or path.startswith('/favicon.ico'):
+            return None
+
+        ip = request.remote_addr
+        try:
+            ban = IPBan.query.filter_by(ip_address=ip, is_active=True).first()
+        except Exception:
+            ban = None
+
+        if ban and ban.is_valid():
+            # Render a friendly banned page (different for voluntary bans)
+            reason = ban.reason or 'Причина не указана.'
+            return render_template('banned.html', reason=reason, is_voluntary=getattr(ban, 'is_voluntary', False)), 403
     
     @app.route('/games/<path:filename>')
     def serve_games(filename):
@@ -306,6 +332,24 @@ def create_app(config_class):
             'version': '1.0.0'
         }, 200 if db_status == 'ok' else 503
     
+    # Ensure SQLite file directory exists (when using file-based SQLite)
+    try:
+        uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+        if uri and uri.startswith('sqlite') and ':memory:' not in uri:
+            # Extract path portion after the sqlite URI prefix
+            db_path_raw = uri
+            if ':///' in uri:
+                db_path_raw = uri.split(':///', 1)[1]
+            else:
+                db_path_raw = uri.split('://', 1)[1]
+            try:
+                db_file = Path(db_path_raw)
+                db_file.parent.mkdir(parents=True, exist_ok=True)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
     # Initialize database
     with app.app_context():
         from app.database import init_db

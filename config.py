@@ -4,8 +4,50 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import io
+import shutil
+from urllib.parse import quote
 
-load_dotenv()
+def robust_load_dotenv(env_path='.env'):
+    """Load .env trying UTF-8 first, fall back to cp1251 and rewrite as UTF-8."""
+    # Try normal load first
+    try:
+        load_dotenv(env_path)
+        return
+    except UnicodeDecodeError:
+        pass
+
+    # If load_dotenv raised UnicodeDecodeError, attempt to repair file encoding
+    if os.path.exists(env_path):
+        try:
+            with open(env_path, 'rb') as f:
+                raw = f.read()
+
+            # Try decode as cp1251 (common Windows Cyrillic)
+            try:
+                text = raw.decode('utf-8')
+            except UnicodeDecodeError:
+                text = raw.decode('cp1251')
+
+            # Rewrite file as UTF-8 without BOM
+            with open(env_path, 'w', encoding='utf-8') as f:
+                f.write(text)
+
+            # Now load
+            load_dotenv(env_path)
+            print(f"[INFO] Rewrote {env_path} as UTF-8 and loaded environment variables.")
+            return
+        except Exception as e:
+            print(f"[WARNING] Failed to repair .env encoding: {e}")
+
+    # Fallback: attempt to load without raising
+    try:
+        load_dotenv(env_path)
+    except Exception:
+        pass
+
+# Use robust loader
+robust_load_dotenv()
 
 class Config:
     """Базова конфігурація"""
@@ -18,21 +60,26 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = 900  # 15 хвилин
     JWT_REFRESH_TOKEN_EXPIRES = 604800  # 7 днів
     
-    # Database
-    if os.environ.get('DATABASE_URL'):
-        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
-    elif os.environ.get('DB_PASSWORD'):
-        # PostgreSQL
-        DB_USER = os.environ.get('DB_USER', 'postgres')
-        DB_PASSWORD = os.environ.get('DB_PASSWORD')
-        DB_HOST = os.environ.get('DB_HOST', 'localhost')
-        DB_PORT = os.environ.get('DB_PORT', '5432')
-        DB_NAME = os.environ.get('DB_NAME', 'freedom13')
-        SQLALCHEMY_DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+    # Database - PostgreSQL only (no SQLite fallback)
+    # Prefer explicit DB_* vars (so local passwords are always used). If absent, fall back to DATABASE_URL.
+    DB_USER = os.environ.get('DB_USER')
+    DB_PASSWORD = os.environ.get('DB_PASSWORD')
+    DB_HOST = os.environ.get('DB_HOST')
+    DB_PORT = os.environ.get('DB_PORT')
+    DB_NAME = os.environ.get('DB_NAME')
+    database_url = os.environ.get('DATABASE_URL')
+
+    if DB_USER and DB_PASSWORD and DB_HOST and DB_PORT and DB_NAME:
+        # Build DSN using individual vars (ensure password is URL-encoded)
+        DB_USER_SAFE = DB_USER
+        DB_PASSWORD_SAFE = quote(DB_PASSWORD, safe='')
+        SQLALCHEMY_DATABASE_URI = f'postgresql://{DB_USER_SAFE}:{DB_PASSWORD_SAFE}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+    elif database_url:
+        # Use provided DATABASE_URL
+        SQLALCHEMY_DATABASE_URI = database_url
     else:
-        # SQLite для development (не для production!)
-        basedir = Path(__file__).parent
-        SQLALCHEMY_DATABASE_URI = f'sqlite:///{basedir / "instance" / "freedom13.db"}'
+        # Not enough config to connect
+        SQLALCHEMY_DATABASE_URI = None
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
@@ -67,7 +114,12 @@ class Config:
     CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
     
     # #region agent log
-    with open('.cursor/debug.log', 'a', encoding='utf-8') as log_file:
+    cursor_dir = Path('.cursor')
+    try:
+        cursor_dir.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+    with open(cursor_dir / 'debug.log', 'a', encoding='utf-8') as log_file:
         import json
         import time
         log_file.write(json.dumps({
@@ -95,7 +147,7 @@ class Config:
             from urllib.parse import urlparse, unquote
             parsed = urlparse(CLOUDINARY_URL)
             # #region agent log
-            with open('.cursor/debug.log', 'a', encoding='utf-8') as f:
+            with open(cursor_dir / 'debug.log', 'a', encoding='utf-8') as f:
                 import json
                 f.write(json.dumps({
                     'location': 'config.py:61',
@@ -115,7 +167,7 @@ class Config:
             # Формат: cloudinary://api_key:api_secret@cloud_name
             # parsed.netloc містить: api_key:api_secret@cloud_name
             # #region agent log
-            with open('.cursor/debug.log', 'a', encoding='utf-8') as log_file:
+            with open(cursor_dir / 'debug.log', 'a', encoding='utf-8') as log_file:
                 import json
                 import time
                 log_file.write(json.dumps({
@@ -138,7 +190,7 @@ class Config:
                 # Розділяємо на auth частину та cloud_name
                 auth_part, cloud_name = parsed.netloc.rsplit('@', 1)
                 # #region agent log
-                with open('.cursor/debug.log', 'a', encoding='utf-8') as log_file:
+                with open(cursor_dir / 'debug.log', 'a', encoding='utf-8') as log_file:
                     import json
                     import time
                     log_file.write(json.dumps({
@@ -161,7 +213,7 @@ class Config:
                     CLOUDINARY_API_KEY = unquote(api_key)
                     CLOUDINARY_API_SECRET = unquote(api_secret)
                     # #region agent log
-                    with open('.cursor/debug.log', 'a', encoding='utf-8') as log_file:
+                    with open(cursor_dir / 'debug.log', 'a', encoding='utf-8') as log_file:
                         import json
                         import time
                         log_file.write(json.dumps({

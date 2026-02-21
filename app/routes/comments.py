@@ -8,6 +8,8 @@ from app.models.post import Post
 from app.middleware.auth import token_required
 from app.middleware.captcha import verify_captcha
 from app.middleware.ip_ban import check_ip_ban
+from app.middleware.spam_detector import check_spam
+from app.middleware.security_manager import SuspiciousActivityTracker
 from app import limiter
 from datetime import datetime
 import uuid
@@ -32,6 +34,7 @@ def get_comments(post_id):
 @token_required
 @limiter.limit("10 per minute")
 @check_ip_ban
+@check_spam(content_field='content')
 @verify_captcha
 def create_comment():
     """Создать новый комментарий"""
@@ -116,17 +119,38 @@ def create_comment():
     db.session.add(comment)
     db.session.commit()
     
+    # Логировать создание комментария
+    SuspiciousActivityTracker.log_security_event(
+        request.current_user.id,
+        'comment_created',
+        description=f'Comment created on post {post_id}'
+    )
+    
     return jsonify(comment.to_dict()), 201
 
 @comments_bp.route('/<comment_id>/like', methods=['POST'])
 @token_required
 @limiter.limit("30 per minute")  # Предотвратить спам лайков на комментариях
 def like_comment(comment_id):
-    """Лайк комментария"""
-    comment = Comment.query.get_or_404(comment_id)
+    """Лайк/дизлайк комментария (toggle)"""
+    from app.models.comment_like import CommentLike
     
-    # TODO: Реализовать модель CommentLike
-    comment.likes_count += 1
+    comment = Comment.query.get_or_404(comment_id)
+    user_id = request.current_user.id
+    
+    # Проверить, уже ли пользователь лайкнул этот коммент
+    existing_like = CommentLike.query.filter_by(comment_id=comment_id, user_id=user_id).first()
+    
+    if existing_like:
+        # Удалить лайк (дизлайк)
+        db.session.delete(existing_like)
+        comment.likes_count = max(0, comment.likes_count - 1)
+    else:
+        # Добавить лайк
+        like = CommentLike(comment_id=comment_id, user_id=user_id)
+        db.session.add(like)
+        comment.likes_count += 1
+    
     db.session.commit()
     
     return jsonify(comment.to_dict()), 200
@@ -145,3 +169,31 @@ def delete_comment(comment_id):
     db.session.commit()
     
     return jsonify({'message': 'Комментарий удален'}), 200
+
+
+@comments_bp.route('/<comment_id>/report', methods=['POST'])
+@token_required
+@limiter.limit("20 per minute")
+@verify_captcha
+def report_comment(comment_id):
+    """Пожаловаться на комментарий"""
+    from app.models.report import Report
+
+    comment = Comment.query.get_or_404(comment_id)
+    data = request.get_json()
+    reason = data.get('reason', '').strip()
+
+    if not reason:
+        return jsonify({'error': 'Причина требуется'}), 400
+
+    report = Report(
+        id=str(uuid.uuid4()),
+        reporter_id=request.current_user.id,
+        comment_id=comment_id,
+        reason=reason
+    )
+
+    db.session.add(report)
+    db.session.commit()
+
+    return jsonify({'message': 'Комментарий отправлен в жалобу'}), 201

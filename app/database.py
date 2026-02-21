@@ -19,7 +19,12 @@ def init_db():
         GoonZonePoll, GoonZoneNews, GoonZoneDoc, GoonZoneRule,
         Follow, Collection, CollectionItem, Report, AdminLog,
         Quote, Gallery, MikuInteraction, Translation, HtmlPage, IPBan, MikuSettings, ProfilePost, Image,
-        UserBookmark, UserPreference, ModerationLog, IPSpamLog
+        UserBookmark, UserPreference, ModerationLog, IPSpamLog, PostLike, CommentLike
+    )
+    
+    # Import security models
+    from app.models.security_models import (
+        UserSession, TwoFactorCode, TrustedDevice, SecurityLog, RateLimitCounter
     )
     
     db.create_all()

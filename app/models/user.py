@@ -18,6 +18,7 @@ class User(db.Model):
     status = db.Column(db.String(50), default='user', nullable=False)  # user, verified, admin
     verification_type = db.Column(db.String(20), default='none', nullable=False)  # none, blue, purple, red
     verification_badge = db.Column(db.String(3), nullable=True)
+    premium_tag = db.Column(db.String(3), nullable=True)  # Premium tag (3 unique letters)
     activity_status = db.Column(db.String(3), default='', nullable=False)  # GRY, PST, MIK, ''
     activity_data = db.Column(db.String(200), nullable=True)
     language = db.Column(db.String(10), default='ru', nullable=False)  # ru, uk, kz, en
@@ -36,7 +37,8 @@ class User(db.Model):
     # Relationships
     posts = db.relationship('Post', backref='author', lazy='dynamic', cascade='all, delete-orphan')
     comments = db.relationship('Comment', backref='author', lazy='dynamic', cascade='all, delete-orphan')
-    
+    user_badges = db.relationship('UserBadge', backref='user', lazy='dynamic', cascade='all, delete-orphan', foreign_keys='UserBadge.user_id')
+
     def to_dict(self, include_email=False):
         """Serialize to dictionary"""
         data = {
@@ -47,9 +49,11 @@ class User(db.Model):
             'status': self.status,
             'verification_type': self.verification_type,
             'verification_badge': self.verification_badge,
+            'premium_tag': self.premium_tag,
             'activity_status': self.activity_status,
             'activity_data': self.activity_data,
             'language': self.language,
+            'badges': [badge.to_dict() for badge in self.user_badges],
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }
         if include_email:

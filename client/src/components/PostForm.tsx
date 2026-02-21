@@ -8,7 +8,7 @@ import SimpleCaptcha from './SimpleCaptcha'
 import { logger } from '../utils/logger'
 
 const postSchema = z.object({
-  content: z.string().min(1, 'Содержание требуется').max(5000, 'Содержание слишком длинное'),
+  content: z.string().min(1, 'Обязательно').max(5000, 'Слишком длинно'),
   tags: z.array(z.string()).optional(),
   is_nsfw: z.boolean().default(false),
   is_anonymous: z.boolean().default(false),
@@ -59,7 +59,7 @@ export default function PostForm({ onSuccess }: PostFormProps) {
     
     // Проверяем, есть ли токен аутентификации перед запросом
     if (!authState.accessToken && !authState.refreshToken) {
-      logger.error('Нет доступного токена аутентификации. Пожалуйста, войдите еще раз.')
+      logger.error('Необходима авторизация')
       useAuthStore.getState().logout()
       window.location.href = '/login'
       return
@@ -102,7 +102,7 @@ export default function PostForm({ onSuccess }: PostFormProps) {
       setIsCollapsed(true)
       onSuccess?.()
     } catch (err: any) {
-      logger.error('Не удалось создать пост:', err)
+      logger.error('Ошибка поста:', err)
       // Если это ошибка 401 и у нас нет токена обновления, перенаправляем на вход
       if (err.response?.status === 401) {
         const authState = useAuthStore.getState()
@@ -153,7 +153,7 @@ export default function PostForm({ onSuccess }: PostFormProps) {
           <div>
             <textarea
               {...register('content')}
-              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 text-white min-h-[140px] text-base focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent transition-all resize-y rounded-xl placeholder:text-gray-500"
+              className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 text-white min-h-[60px] text-base focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent transition-all resize-y rounded-xl placeholder:text-gray-500"
               placeholder="Что у вас на уме?"
             />
             {errors.content && (
@@ -163,7 +163,7 @@ export default function PostForm({ onSuccess }: PostFormProps) {
 
           <div>
             <label className="block mb-2 text-sm text-gray-300 font-medium">
-              Изображение (необязательно)
+              Изображение
             </label>
             <div className="relative">
               <input
@@ -203,36 +203,39 @@ export default function PostForm({ onSuccess }: PostFormProps) {
             </label>
           </div>
 
-          {/* Emotion selection HP / AG / NT */}
+          {/* Emotion selection */}
           <div className="pt-4 border-t border-gray-700">
-            <p className="mb-2 text-sm font-medium text-gray-300">Как вы себя чувствуете?</p>
-            <div className="flex flex-wrap gap-2">
-              <label className="px-3 py-2 border border-white rounded-lg text-xs md:text-sm cursor-pointer flex items-center gap-2 hover:bg-white hover:text-black transition-colors">
+            <p className="mb-2 text-sm font-medium text-gray-400">Настрій:</p>
+            <div className="flex flex-wrap gap-3">
+              <label className="px-4 py-2 bg-gray-700/40 border border-gray-600 rounded-lg text-sm cursor-pointer flex items-center gap-2 hover:bg-gray-600/60 hover:border-gray-400 transition-all active:scale-95">
                 <input
                   type="radio"
                   value="HP"
                   {...register('emotion')}
-                  className="w-3 h-3 cursor-pointer"
+                  className="w-4 h-4 cursor-pointer accent-green-400"
                 />
-                <span>HP</span>
+                <span className="text-lg">➕</span>
+                <span className="text-gray-300">Позитив</span>
               </label>
-              <label className="px-3 py-2 border border-white rounded-lg text-xs md:text-sm cursor-pointer flex items-center gap-2 hover:bg-white hover:text-black transition-colors">
+              <label className="px-4 py-2 bg-gray-700/40 border border-gray-600 rounded-lg text-sm cursor-pointer flex items-center gap-2 hover:bg-gray-600/60 hover:border-gray-400 transition-all active:scale-95">
                 <input
                   type="radio"
                   value="AG"
                   {...register('emotion')}
-                  className="w-3 h-3 cursor-pointer"
+                  className="w-4 h-4 cursor-pointer accent-red-400"
                 />
-                <span>AG</span>
+                <span className="text-lg">➖</span>
+                <span className="text-gray-300">Негатив</span>
               </label>
-              <label className="px-3 py-2 border border-white rounded-lg text-xs md:text-sm cursor-pointer flex items-center gap-2 hover:bg-white hover:text-black transition-colors">
+              <label className="px-4 py-2 bg-gray-700/40 border border-gray-600 rounded-lg text-sm cursor-pointer flex items-center gap-2 hover:bg-gray-600/60 hover:border-gray-400 transition-all active:scale-95">
                 <input
                   type="radio"
                   value="NT"
                   {...register('emotion')}
-                  className="w-3 h-3 cursor-pointer"
+                  className="w-4 h-4 cursor-pointer accent-yellow-400"
                 />
-                <span>NT</span>
+                <span className="text-lg">±</span>
+                <span className="text-gray-300">Нейтраль</span>
               </label>
             </div>
           </div>
@@ -240,7 +243,7 @@ export default function PostForm({ onSuccess }: PostFormProps) {
           {/* CAPTCHA */}
           <div className="pt-4 border-t border-gray-700">
             <label className="block mb-3 text-sm font-semibold text-gray-300">
-              🔒 CAPTCHA (защита от ботов)
+              <img src="/icons/icons8-замок-50.png" alt="Lock" className="w-4 h-4 inline mr-1" /> CAPTCHA
             </label>
             <div className="bg-gray-800/30 p-4 rounded-xl border border-gray-700">
               <SimpleCaptcha
@@ -274,7 +277,7 @@ export default function PostForm({ onSuccess }: PostFormProps) {
               disabled={isSubmitting || !captchaSolution || !captchaQuestionId}
               className="flex-1 px-6 py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
             >
-              {isSubmitting ? '⏳ Публикация...' : '📝 Опубликовать'}
+              {isSubmitting ? '⏳ Публикация...' : <><img src="/icons/icons8-документ-50.png" alt="Post" className="w-4 h-4 inline mr-1" /> Опубликовать</>}
             </button>
           </div>
         </form>

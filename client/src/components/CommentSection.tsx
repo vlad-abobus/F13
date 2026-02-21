@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ReportForm from './ReportForm'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '../api/client'
 import { useAuthStore } from '../store/authStore'
@@ -6,6 +7,7 @@ import { format } from 'date-fns'
 import { showToast } from '../utils/toast'
 import SimpleCaptcha from './SimpleCaptcha'
 import SafeImage from './SafeImage'
+import UserLabel from './UserLabel'
 
 interface CommentSectionProps {
   postId: string
@@ -20,6 +22,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
   const [captchaError, setCaptchaError] = useState<string | null>(null)
   const [showCaptcha, setShowCaptcha] = useState(false)
   const queryClient = useQueryClient()
+  const [reportOpenMap, setReportOpenMap] = useState<Record<string, boolean>>({})
 
   const { data: comments } = useQuery({
     queryKey: ['comments', postId],
@@ -61,9 +64,22 @@ export default function CommentSection({ postId }: CommentSectionProps) {
     mutationFn: async (commentId: string) => {
       return apiClient.post(`/comments/${commentId}/like`)
     },
-    onSuccess: () => {
+    onSuccess: (data, commentId) => {
+      // Toggle local state
+      setLikedComments(prev => {
+        const newSet = new Set(prev)
+        if (newSet.has(commentId)) {
+          newSet.delete(commentId)
+        } else {
+          newSet.add(commentId)
+        }
+        return newSet
+      })
       queryClient.invalidateQueries({ queryKey: ['comments', postId] })
-      showToast('Лайк добавлен!', 'success')
+      showToast('Лайк обновлен!', 'success')
+    },
+    onError: () => {
+      showToast('Ошибка при обновлении лайка', 'error')
     },
   })
 
@@ -98,6 +114,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
 
   const renderComment = (comment: any, depth = 0) => {
     const canDelete = isAuthenticated && (user?.id === comment.author?.id || user?.status === 'admin')
+    const showReportForComment = !!reportOpenMap[comment.id]
 
     return (
       <div key={comment.id} className={`border-2 border-white p-4 mb-4 ${depth > 0 ? 'ml-8' : ''}`}>
@@ -112,7 +129,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
               </div>
             }
           />
-          <span className="font-bold">{comment.author?.username || 'Аноним'}</span>
+          <UserLabel user={comment.author} />
           <span className="text-sm text-gray-400">
             {format(new Date(comment.created_at), 'dd.MM.yyyy HH:mm')}
           </span>
@@ -124,9 +141,10 @@ export default function CommentSection({ postId }: CommentSectionProps) {
           <button
             onClick={() => likeCommentMutation.mutate(comment.id)}
             disabled={!isAuthenticated || likeCommentMutation.isPending}
-            className="hover:underline disabled:opacity-50"
+            className="hover:text-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed group flex items-center gap-1"
           >
-            ❤️ {comment.likes_count}
+            <span className="text-lg group-hover:scale-110 transition-transform">🥴</span>
+            <span>{comment.likes_count}</span>
           </button>
           {isAuthenticated && (
             <button
@@ -144,6 +162,12 @@ export default function CommentSection({ postId }: CommentSectionProps) {
               Удалить
             </button>
           )}
+          <button
+            onClick={() => setReportOpenMap(prev => ({ ...prev, [comment.id]: !prev[comment.id] }))}
+            className="text-gray-300 hover:underline"
+          >
+            R
+          </button>
         </div>
 
         {replyingTo === comment.id && (
@@ -206,6 +230,11 @@ export default function CommentSection({ postId }: CommentSectionProps) {
             {comment.replies.map((reply: any) => renderComment(reply, depth + 1))}
           </div>
         )}
+        {showReportForComment && (
+          <div className="mt-2">
+            <ReportForm targetType="comment" targetId={comment.id} onClose={() => setReportOpenMap(prev => ({ ...prev, [comment.id]: false }))} onReported={() => setReportOpenMap(prev => ({ ...prev, [comment.id]: false }))} />
+          </div>
+        )}
       </div>
     )
   }
@@ -232,7 +261,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             className="w-full px-4 py-2 bg-black border-2 border-white text-white min-h-[100px]"
-            placeholder="Добавить комментарий..."
+            placeholder="Комментарий..."
           />
           
           {/* CAPTCHA Section with Collapse */}
@@ -242,7 +271,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
               onClick={() => setShowCaptcha(!showCaptcha)}
             >
               <div className="flex items-center justify-between">
-                <span className="font-bold">🔒 CAPTCHA (защита от ботов)</span>
+                <span className="font-bold"><img src="/icons/icons8-замок-50.png" alt="Lock" className="w-4 h-4 inline mr-1" /> CAPTCHA</span>
                 <span className="text-xl">{showCaptcha ? '▲' : '▼'}</span>
               </div>
             </div>
@@ -300,7 +329,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
       <div>
         {comments?.map((comment: any) => renderComment(comment))}
         {(!comments || comments.length === 0) && (
-          <p className="text-gray-400">Пока что нет комментариев</p>
+          <p className="text-gray-400">Нет комментариев</p>
         )}
       </div>
     </div>

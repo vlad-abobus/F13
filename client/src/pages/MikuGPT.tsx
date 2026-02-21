@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import apiClient from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import SafeImage from '../components/SafeImage'
 import { showToast } from '../utils/toast'
 import { logger } from '../utils/logger'
-import { initializeGemini, sendGeminiMessage, sendGeminiMessageStreaming } from '../services/GeminiChat'
+import { initializeGemini, sendGeminiMessageStreaming } from '../services/GeminiChat'
 
 /**
  * MikuGPT Chat Interface
@@ -83,8 +83,25 @@ export default function MikuGPT() {
   // Разбор входящего фрагмента: пытаемся извлечь JSON-блоки с эмоцией и содержимым,
   // и возвращаем очищенное содержимое плюс необязательную эмоцию.
   const parseChunk = (text: string): { content: string; emotion?: string | null } => {
-    // Попытка прямого разбора JSON, если фрагмент является объектом JSON
     const trimmed = text.trim()
+
+    // 1) Обработать fenced code block с JSON: ```json {...}``` — удалить весь блок и распарсить JSON внутри
+    const fencedMatch = text.match(/```json\s*([\s\S]*?)```/i)
+    if (fencedMatch) {
+      try {
+        const inner = fencedMatch[1].trim()
+        const obj = JSON.parse(inner)
+        const emotion = obj.emotion || null
+        const content = (obj.content || obj.message || '').toString()
+        const cleaned = text.replace(fencedMatch[0], '').trim()
+        const combined = (content || cleaned).replace(/\*?думаю[.…]*\s*/gi, '').trim()
+        return { content: combined || '', emotion }
+      } catch (e) {
+        // fallthrough
+      }
+    }
+
+    // 2) Попытка прямого разбора JSON, если фрагмент является объектом JSON
     try {
       if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
         const obj = JSON.parse(trimmed)
@@ -94,36 +111,59 @@ export default function MikuGPT() {
         return { content: cleanedContent || '', emotion }
       }
     } catch (e) {
-      // Игнорируем ошибку разбора и переходим к попыткам на основе регулярных выражений
+      // ignore and continue
     }
 
-    // Попытка найти подстроку JSON, которая содержит поле эмоции
-    const jsonSubMatch = text.match(/\{[^}]*\"emotion\"[^}]*\}/s)
+    // 3) Попытка найти подстроку JSON, которая содержит поле эмоции (включая многострочные объекты)
+    const jsonSubMatch = text.match(/\{[\s\S]*?"emotion"[\s\S]*?\}/i)
     if (jsonSubMatch) {
       try {
         const obj = JSON.parse(jsonSubMatch[0])
         const emotion = obj.emotion || null
         const content = (obj.content || obj.message || '').toString()
-        // Удаляем подстроку JSON из исходного текста при отображении
-        const cleaned = text.replace(jsonSubMatch[0], '').trim()
-        const combined = content || cleaned
-        const cleanedContent = combined.replace(/\*?думаю[.…]*\s*/gi, '').trim()
-        return { content: cleanedContent || '', emotion }
+        // Удаляем весь найденный JSON-блок (и возможные ```json``` вокруг него)
+        let cleaned = text.replace(jsonSubMatch[0], '').replace(/```json\s*```/i, '').trim()
+        // Если вокруг был fenced блок, удалим его маркеры
+        cleaned = cleaned.replace(/```json\s*/i, '').replace(/```/g, '').trim()
+        const combined = (content || cleaned).replace(/\*?думаю[.…]*\s*/gi, '').trim()
+        return { content: combined || '', emotion }
       } catch (e) {
-        // Если разбор не удается, продолжать нельзя
+        // continue
       }
     }
 
-    // Запасной вариант: попытка извлечь эмоцию через регулярное выражение, но не показываем сырой JSON
-    const emotionMatch = text.match(/\"emotion\"\s*:\s*\"([^\"]+)\"/)
+    // 4) Запасной вариант: попытка извлечь эмоцию через регэксп
+    const emotionMatch = text.match(/"emotion"\s*:\s*"([^\"]+)"/i)
     if (emotionMatch) {
       const emotion = emotionMatch[1]
-      const cleaned = text.replace(/\{[^}]*\"emotion\"[^}]*\}/s, '').trim()
+      let cleaned = text.replace(/\{[\s\S]*?"emotion"[\s\S]*?\}/i, '').trim()
+      cleaned = cleaned.replace(/```json[\s\S]*?```/i, '').trim()
       const cleanedContent = cleaned.replace(/\*?думаю[.…]*\s*/gi, '').trim()
-      return { content: cleanedContent, emotion }
+      // Normalize emotion to match available filenames (lowercase, underscores, substring match)
+      const normalizeEmotion = (e: string) => {
+        if (!e) return null
+        let cand = e.trim().toLowerCase().replace(/\s+/g, '_').replace(/-/g, '_')
+        cand = cand.replace(/\.(png|jpg|jpeg)$/i, '')
+        // if exact, return
+        const available = Object.keys(emotions || {})
+        // emotions from API may be a mapping; extract values if so
+        const values = available.length ? Object.values(emotions as any) : []
+        const allNames = (values.length ? values : available).map(String)
+        if (allNames.includes(cand)) return cand
+        // substring match
+        for (const a of allNames) {
+          if (a.includes(cand)) return a
+        }
+        for (const a of allNames) {
+          if (cand.includes(a)) return a
+        }
+        return cand
+      }
+
+      return { content: cleanedContent, emotion: normalizeEmotion(emotion) }
     }
 
-    // JSON не найден — удаляем маркеры размышления и возвращаем текст
+    // 5) JSON не найден — удаляем маркеры размышления и возвращаем текст
     const cleanedText = text.replace(/\*?думаю[.…]*\s*/gi, '').trim()
     return { content: cleanedText, emotion: null }
   }
@@ -131,7 +171,7 @@ export default function MikuGPT() {
   const handleSend = async () => {
     const trimmedMessage = message.trim()
     if (!trimmedMessage) {
-      showToast('Введите сообщение', 'warning')
+      showToast('Введите текст', 'warning')
       return
     }
     if (!isAuthenticated) {
@@ -209,10 +249,10 @@ export default function MikuGPT() {
         } catch (error) {
           logger.warn('Потоковое получение Gemini не удалось, переход на бэкенд:', error)
           // Переходим на бэкенд
-          await handleBackendChat(trimmedMessage, assistantMessageIndex)
+          await handleBackendChat(trimmedMessage)
         }
       } else {
-        await handleBackendChat(trimmedMessage, assistantMessageIndex)
+        await handleBackendChat(trimmedMessage)
       }
     } catch (error: any) {
       logger.error('Ошибка чата MikuGPT:', error)
@@ -234,7 +274,7 @@ export default function MikuGPT() {
     }
   }
 
-  const handleBackendChat = async (trimmedMessage: string, assistantMessageIndex: number) => {
+  const handleBackendChat = async (trimmedMessage: string) => {
     try {
       const response = await apiClient.post('/miku/chat', {
         message: trimmedMessage,
@@ -261,9 +301,30 @@ export default function MikuGPT() {
     }
   }
 
-  const currentEmotion = chatHistory[chatHistory.length - 1]?.emotion || 'aggressiv_comedy'
-  const emotionImageUrl = `/api/miku/emotion-image/${emotionSet}/${currentEmotion}`
+  // Emotion selection logic:
+  // - If there are no messages yet -> 'sleeping'
+  // - If last message is from user and assistant has not replied yet -> 'happy_wait'
+  // - If assistant is currently generating a reply (isLoading) -> 'thinking'
+  // - Otherwise use the assistant's last emitted emotion (if any) or fallback
   const fallbackEmotion = 'aggressiv_comedy'
+  let currentEmotion = fallbackEmotion
+  if (chatHistory.length === 0) {
+    currentEmotion = 'sleeping'
+  } else {
+    const last = chatHistory[chatHistory.length - 1]
+    if (last.role === 'user') {
+      currentEmotion = 'happy_wait'
+    } else if (last.role === 'assistant') {
+      // If assistant is generating (streaming or backend call in progress), show 'thinking'
+      if (isLoading && (!last.content || last.content.trim() === '')) {
+        currentEmotion = 'thinking'
+      } else {
+        currentEmotion = last.emotion || 'happy_wait'
+      }
+    }
+  }
+
+  const emotionImageUrl = `/api/miku/emotion-image/${emotionSet}/${currentEmotion}`
   const fallbackEmotionUrl = `/api/miku/emotion-image/${emotionSet}/${fallbackEmotion}`
 
   return (
@@ -300,7 +361,7 @@ export default function MikuGPT() {
                 onChange={(e) => setEmotionSet(e.target.value)}
                 className="w-full px-4 py-2 bg-black border-2 border-white text-white"
               >
-                <option value="DEFAULT">Мику (40 эмоций)</option>
+                <option value="DEFAULT">Мику</option>
               </select>
             </div>
 
@@ -310,7 +371,7 @@ export default function MikuGPT() {
                 checked={flirtEnabled}
                 onChange={(e) => setFlirtEnabled(e.target.checked)}
               />
-              Флирт / романтика
+              Флирт
             </label>
 
             <label className="flex items-center gap-2">

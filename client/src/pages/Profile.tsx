@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '../api/client'
+import RandomBanner from '../components/RandomBanner'
 import { useAuthStore } from '../store/authStore'
-import VerificationBadge from '../components/VerificationBadge'
 import BadgeDisplay from '../components/BadgeDisplay'
+import UserLabel from '../components/UserLabel'
 import PostCard from '../components/PostCard'
 import SafeImage from '../components/SafeImage'
 import { format } from 'date-fns'
@@ -69,13 +70,13 @@ export default function Profile() {
       setCaptchaQuestionId(null)
       setCaptchaError(null)
       setShowCaptcha(false)
-      showToast('Сообщение добавлено на стену!', 'success')
+      showToast('Добавлено!', 'success')
     },
     onError: () => {
       setCaptchaSolution(null)
       setCaptchaQuestionId(null)
       setCaptchaError(null)
-      showToast('Ошибка при добавлении сообщения', 'error')
+      showToast('Ошибка', 'error')
     },
   })
 
@@ -108,9 +109,7 @@ export default function Profile() {
       {/* Telegram Profile Header */}
       <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 mb-6 rounded-2xl overflow-hidden shadow-2xl pb-8 pt-0">
         {/* Banner */}
-        <div className="h-44 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 relative">
-          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-gray-900 to-transparent"></div>
-        </div>
+        <RandomBanner className="h-44" />
         {/* Profile Core Info: Avatar, Name, Bio */}
         <div className="flex flex-col items-center -mt-24 px-6">
           {/* Avatar */}
@@ -133,11 +132,7 @@ export default function Profile() {
           </div>
           {/* Username + Verification */}
           <div className="flex flex-row items-center mt-5 gap-2 flex-wrap">
-            <h1 className="text-3xl sm:text-4xl font-bold break-words text-white">{user.username}</h1>
-            <VerificationBadge
-              type={user.verification_type || 'none'}
-              badge={user.verification_badge}
-            />
+            <UserLabel user={user} large toProfile={false} />
           </div>
           {/* Bio */}
           {user.bio && (
@@ -165,9 +160,10 @@ export default function Profile() {
             {isOwnProfile ? (
               <Link
                 to={`/profile/${username}/settings`}
-                className="px-6 py-2.5 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 transition-all shadow-lg"
+                className="px-6 py-2.5 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 transition-all shadow-lg flex items-center gap-2"
               >
-                ⚙️ Настройки
+                <img src="/icons/icons8-настройки-50.png" alt="Settings" className="w-5 h-5" />
+                Настройки
               </Link>
             ) : (
               isAuthenticated && (
@@ -191,10 +187,10 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Wall Section - Messenger Style */}
+      {/* Write Message Form - Separate Section */}
       {isAuthenticated && (
         <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 rounded-2xl p-6 mb-6 shadow-xl">
-          <h2 className="text-2xl font-bold mb-6 text-white">📝 Стена</h2>
+          <h2 className="text-2xl font-bold mb-6 text-white">✍️ Написать</h2>
           
           <form
             onSubmit={(e) => {
@@ -209,13 +205,13 @@ export default function Profile() {
               
               createWallPostMutation.mutate(wallPostContent)
             }}
-            className="mb-6"
+            className="w-full"
           >
             <textarea
               value={wallPostContent}
               onChange={(e) => setWallPostContent(e.target.value)}
               className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 text-white rounded-xl min-h-[120px] resize-none focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent placeholder:text-gray-500"
-              placeholder={isOwnProfile ? 'Что у вас на уме?' : `Написать на стене ${user.username}...`}
+              placeholder={isOwnProfile ? 'Что на уме?' : `Сообщение для ${user.username}...`}
             />
             
             {/* CAPTCHA Section with Collapse */}
@@ -225,7 +221,7 @@ export default function Profile() {
                 onClick={() => setShowCaptcha(!showCaptcha)}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-gray-300">🔒 CAPTCHA (защита от ботов)</span>
+                  <span className="font-semibold text-gray-300">🔒 CAPTCHA</span>
                   <span className="text-xl text-gray-400">{showCaptcha ? '▲' : '▼'}</span>
                 </div>
               </div>
@@ -258,9 +254,14 @@ export default function Profile() {
               {createWallPostMutation.isPending ? 'Отправка...' : 'Опубликовать'}
             </button>
           </form>
+        </div>
+      )}
 
-          {/* Wall Posts - Messenger Style */}
-          <div className="space-y-4">
+      {/* Wall Posts Section - Separate from Form */}
+      <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 rounded-2xl p-6 shadow-xl">
+        <h2 className="text-2xl font-bold mb-6 text-white">💬 Стена</h2>
+        
+        <div className="space-y-4">
             {wallPosts?.posts?.map((post: any) => (
               <div key={post.id} className="bg-gray-800/50 border border-gray-700 rounded-xl p-4 hover:bg-gray-800 transition-colors">
                 <div className="flex items-start gap-3 mb-3">
@@ -276,7 +277,7 @@ export default function Profile() {
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-white">{post.author?.username || 'Аноним'}</span>
+                      <UserLabel user={post.author} />
                       <span className="text-xs text-gray-500">
                         {format(new Date(post.created_at), 'dd.MM.yyyy HH:mm')}
                       </span>
@@ -315,7 +316,7 @@ export default function Profile() {
                           queryClient.invalidateQueries({ queryKey: ['profile-posts', username] })
                           showToast('Сообщение удалено', 'info')
                         } catch {
-                          showToast('Ошибка при удалении', 'error')
+                          showToast('Ошибка', 'error')
                         }
                       }}
                       className="text-gray-400 hover:text-gray-300 text-sm p-1 rounded hover:bg-gray-700 transition-colors"
@@ -329,12 +330,11 @@ export default function Profile() {
             {(!wallPosts?.posts || wallPosts.posts.length === 0) && (
               <div className="text-center py-12 text-gray-400 bg-gray-800/30 rounded-xl border border-gray-700">
                 <div className="text-4xl mb-3">💬</div>
-                <div>Пока нет сообщений на стене</div>
+                <div>Нет сообщений</div>
               </div>
             )}
-          </div>
         </div>
-      )}
+      </div>
 
       {/* Posts Section */}
       <div>
@@ -352,7 +352,7 @@ export default function Profile() {
           {(!postsData?.posts || postsData.posts.length === 0) && (
             <div className="border-2 border-white p-12 text-center">
               <div className="text-4xl mb-4">📝</div>
-              <div className="text-xl text-gray-400 mb-2">Пока нет постов</div>
+              <div className="text-xl text-gray-400 mb-2">Нет постов</div>
               {isOwnProfile && (
                 <Link
                   to="/"

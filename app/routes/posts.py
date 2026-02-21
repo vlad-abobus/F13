@@ -7,6 +7,9 @@ from app.models.post import Post
 from app.middleware.auth import token_required
 from app.middleware.captcha import verify_captcha
 from app.middleware.ip_ban import check_ip_ban
+from app.middleware.spam_detector import check_spam
+from app.middleware.security_manager import SuspiciousActivityTracker
+from app.middleware.sql_injection_protection import protect_from_sql_injection
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from app import limiter
 from datetime import datetime
@@ -15,6 +18,7 @@ import uuid
 posts_bp = Blueprint('posts', __name__)
 
 @posts_bp.route('/', methods=['GET'])
+@protect_from_sql_injection
 def get_posts():
     """Получить список постов"""
     filter_type = request.args.get('filter', 'new')  # новое, популярное, следящее
@@ -92,6 +96,7 @@ def get_post(post_id):
 @limiter.limit("5 per minute")  # Ограничение: 5 постов в минуту
 @check_ip_ban
 @token_required
+@check_spam(content_field='content')
 @verify_captcha
 def create_post():
     """Создать новый пост"""
@@ -236,17 +241,38 @@ def create_post():
 
     Timer(2.0, reset_activity_and_trigger_miku).start()
     
+    # Логировать создание поста
+    SuspiciousActivityTracker.log_security_event(
+        request.current_user.id,
+        'post_created',
+        description=f'Post created with moderation status: {moderation_status}'
+    )
+    
     return jsonify(post.to_dict()), 201
 
 @posts_bp.route('/<post_id>/like', methods=['POST'])
 @token_required
 @limiter.limit("30 per minute")  # Предотвратить спам лайков на IP/пользователя
 def like_post(post_id):
-    """Лайк/дизлайк поста"""
-    post = Post.query.get_or_404(post_id)
+    """Лайк/дизлайк поста (toggle)"""
+    from app.models.post_like import PostLike
     
-    # TODO: Реализовать модель PostLike для отслеживания кто лайкнул
-    post.likes_count += 1
+    post = Post.query.get_or_404(post_id)
+    user_id = request.current_user.id
+    
+    # Проверить, уже ли пользователь лайкнул этот пост
+    existing_like = PostLike.query.filter_by(post_id=post_id, user_id=user_id).first()
+    
+    if existing_like:
+        # Удалить лайк (дизлайк)
+        db.session.delete(existing_like)
+        post.likes_count = max(0, post.likes_count - 1)
+    else:
+        # Добавить лайк
+        like = PostLike(post_id=post_id, user_id=user_id)
+        db.session.add(like)
+        post.likes_count += 1
+    
     db.session.commit()
     
     return jsonify(post.to_dict()), 200

@@ -4,8 +4,6 @@
  * In production: logs are suppressed except for errors
  */
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error'
-
 class Logger {
   private isDev = import.meta.env.DEV
 

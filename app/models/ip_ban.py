@@ -15,6 +15,7 @@ class IPBan(db.Model):
     banned_by = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=True)
     banned_until = db.Column(db.DateTime, nullable=True)  # None = permanent ban
     is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
+    is_voluntary = db.Column(db.Boolean, default=False, nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     
     def is_valid(self):
@@ -33,6 +34,7 @@ class IPBan(db.Model):
             'reason': self.reason,
             'banned_until': self.banned_until.isoformat() if self.banned_until else None,
             'is_active': self.is_active,
+            'is_voluntary': self.is_voluntary,
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }
     

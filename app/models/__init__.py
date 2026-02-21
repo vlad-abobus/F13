@@ -25,6 +25,8 @@ from app.models.ip_spam_log import IPSpamLog
 from app.models.community_rule import CommunityRule
 from app.models.user_bookmark import UserBookmark
 from app.models.user_preference import UserPreference
+from app.models.post_like import PostLike
+from app.models.comment_like import CommentLike
 
 __all__ = [
     'User',
@@ -56,4 +58,6 @@ __all__ = [
     'CommunityRule',
     'UserBookmark',
     'UserPreference',
+    'PostLike',
+    'CommentLike',
 ]

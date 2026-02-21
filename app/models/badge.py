@@ -35,6 +35,8 @@ class UserBadge(db.Model):
     awarded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     awarded_by = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=True)
     
+    badge = db.relationship('Badge', backref='user_badges')
+    
     __table_args__ = (
         db.UniqueConstraint('user_id', 'badge_id', name='unique_user_badge'),
     )

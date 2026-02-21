@@ -64,54 +64,75 @@ def upload_image():
         return jsonify({'error': f'File too large. Max size: {max_size / 1024 / 1024:.1f}MB'}), 400
     
     # Перевірка наявності Cloudinary конфігурації
-    # Спочатку перевіряємо CLOUDINARY_URL, потім окремі змінні
     cloudinary_url = current_app.config.get('CLOUDINARY_URL')
     cloud_name = current_app.config.get('CLOUDINARY_CLOUD_NAME')
     api_key = current_app.config.get('CLOUDINARY_API_KEY')
     api_secret = current_app.config.get('CLOUDINARY_API_SECRET')
     
+    # Встановлюємо Cloudinary конфігурацію
     try:
-        # Налаштування Cloudinary
-        if cloudinary_url:
-            # Використовуємо CLOUDINARY_URL (найпростіший спосіб)
-            # cloudinary.config() автоматично читає CLOUDINARY_URL з os.environ
-            import os
-            # Встановлюємо в os.environ, якщо ще не встановлено
+        import os
+        if cloudinary_url and 'your_api_key' not in cloudinary_url:
+            # Використовуємо CLOUDINARY_URL
             if 'CLOUDINARY_URL' not in os.environ:
                 os.environ['CLOUDINARY_URL'] = cloudinary_url
             cloudinary.config()
-        elif all([cloud_name, api_key, api_secret]):
+        elif cloud_name and api_key and api_secret:
             # Використовуємо окремі змінні
             cloudinary.config(
                 cloud_name=cloud_name,
                 api_key=api_key,
                 api_secret=api_secret
             )
-        else:
-            return jsonify({
-                'error': 'Cloudinary configuration missing. Please set CLOUDINARY_URL or CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET'
-            }), 500
         
-        # Завантаження файлу в Cloudinary
-        # Використовуємо secure=True для отримання HTTPS URL
+        # Спробуємо завантажити файл до Cloudinary
         upload_result = cloudinary.uploader.upload(
             file,
-            folder='freedom13',  # Папка в Cloudinary для організації
+            folder='freedom13',
             use_filename=True,
             unique_filename=True,
             overwrite=False,
             resource_type='image',
-            secure=True  # Отримуємо secure_url (HTTPS)
+            secure=True
         )
         
-        # Отримуємо secure_url та public_id з результату
         secure_url = upload_result.get('secure_url')
         public_id = upload_result.get('public_id')
         
         if not secure_url or not public_id:
-            return jsonify({'error': 'Failed to upload image to Cloudinary'}), 500
+            raise Exception('Failed to upload image to Cloudinary - no URL returned')
         
-        # Зберігаємо метадані в PostgreSQL
+        use_cloudinary = True
+        
+    except Exception as e:
+        # Logujemo Cloudinary помилку, але продовжуємо
+        current_app.logger.warning(f'Cloudinary upload failed: {str(e)}. Using local storage as fallback.')
+        use_cloudinary = False
+    
+    # Якщо Cloudinary не спрацював, використовуємо локальне зберігання
+    if not use_cloudinary:
+        import os
+        from pathlib import Path
+        import uuid
+        
+        upload_dir = Path(current_app.config.get('UPLOAD_DIR', './uploads'))
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Генеруємо унікальне ім'я файлу
+        file_uuid = str(uuid.uuid4())
+        filename = f"{file_uuid}_{file.filename}"
+        file_path = upload_dir / filename
+        
+        # Зберігаємо файл локально
+        file.seek(0)
+        file.save(str(file_path))
+        
+        # URL для локального доступу
+        secure_url = f"/uploads/{filename}"
+        public_id = f"local_{file_uuid}"
+    
+    # Зберігаємо метадані в БД
+    try:
         image_record = Image(
             url=secure_url,
             public_id=public_id,
@@ -136,8 +157,11 @@ def upload_image():
         error_msg = str(e)
         error_traceback = traceback.format_exc()
         
-        # Логування помилки
-        current_app.logger.error(f'Upload error: {error_msg}\n{error_traceback}')
+        # Логування помилки з деталізацією
+        current_app.logger.error(f'Upload error at step: {error_msg}')
+        current_app.logger.error(f'Full traceback:\n{error_traceback}')
+        print(f'[UPLOAD ERROR] {error_msg}')
+        print(f'[UPLOAD TRACEBACK]\n{error_traceback}')
         
         # Перевірка типу помилки для більш інформативного повідомлення
         if 'cloudinary' in error_msg.lower() or 'upload' in error_msg.lower():
@@ -146,10 +170,11 @@ def upload_image():
         # Загальна помилка - include traceback in debug mode
         if current_app.config.get('DEBUG', False):
             return jsonify({
-                'error': 'Internal server error',
+                'error': 'Internal server error during upload',
                 'message': error_msg,
+                'type': type(e).__name__,
                 'traceback': error_traceback
             }), 500
         
         # Загальна помилка
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({'error': f'Internal server error: {error_msg}'}), 500

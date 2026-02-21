@@ -1,15 +1,29 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import apiClient from '../api/client'
 import { useAuthStore } from '../store/authStore'
-import SafeImage from '../components/SafeImage'
+import CollageGallery from '../components/CollageGallery'
+import GalleryUploadModal from '../components/GalleryUploadModal'
 
 export default function Gallery() {
   const { isAuthenticated } = useAuthStore()
-  const [category, setCategory] = useState<string>('')
-  const [tag, setTag] = useState<string>('')
+  const queryClient = useQueryClient()
+  const [category] = useState<string>('')
+  const [tagInput, setTagInput] = useState<string>('') // Temp input value
+  const [tag, setTag] = useState<string>('') // Query parameter
   const [showNsfw, setShowNsfw] = useState(false)
   const [page, setPage] = useState(1)
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
+
+  // Debounce tag input to only query after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTag(tagInput)
+      setPage(1) // Reset to page 1 when tag changes
+    }, 500) // 500ms delay
+
+    return () => clearTimeout(timer)
+  }, [tagInput])
 
   const { data, isLoading } = useQuery({
     queryKey: ['gallery', category, tag, page],
@@ -23,28 +37,43 @@ export default function Gallery() {
     },
   })
 
-  const { data: tags } = useQuery({
-    queryKey: ['gallery-tags'],
-    queryFn: async () => {
-      const response = await apiClient.get('/gallery/tags')
-      return response.data
-    },
-  })
-
   if (isLoading) {
     return <div className="text-center py-8">Завантаження...</div>
   }
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Галерея</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Галерея</h1>
+        {isAuthenticated && (
+          <button
+            onClick={() => setIsUploadModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2 transition"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            Додати до галереї
+          </button>
+        )}
+      </div>
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-wrap gap-4">
           <input
             type="text"
-            value={tag}
-            onChange={(e) => setTag(e.target.value)}
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
             placeholder="Тег..."
             className="px-4 py-2 bg-black border-2 border-white text-white"
           />
@@ -61,28 +90,10 @@ export default function Gallery() {
         </div>
       </div>
 
-      <div className="columns-2 md:columns-4 gap-4">
-        {data?.items
-          ?.filter((item: any) => showNsfw || !item.is_nsfw)
-          ?.map((item: any) => (
-            <div key={item.id} className="mb-4 break-inside-avoid border-2 border-white">
-              <SafeImage
-                src={item.image_url}
-                alt="Gallery item"
-                className={`w-full ${item.is_nsfw && !showNsfw ? 'blur-sm' : ''}`}
-              />
-              {item.tags && item.tags.length > 0 && (
-                <div className="p-2">
-                  {item.tags.map((t: string, idx: number) => (
-                    <span key={idx} className="text-xs text-gray-400 mr-2">
-                      #{t}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-      </div>
+      <CollageGallery 
+        items={data?.items || []} 
+        showNsfw={showNsfw}
+      />
 
       {data?.pagination && (
         <div className="mt-6 flex justify-center gap-2">
@@ -105,6 +116,12 @@ export default function Gallery() {
           </button>
         </div>
       )}
+
+      <GalleryUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['gallery'] })}
+      />
     </div>
   )
 }

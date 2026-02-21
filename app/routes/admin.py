@@ -11,6 +11,7 @@ from app.models.ip_ban import IPBan
 from app.models.miku_settings import MikuSettings
 from app.models.moderation_log import ModerationLog
 from app.middleware.auth import admin_required
+from app.middleware.security_manager import SuspiciousActivityTracker
 from datetime import datetime, timedelta
 import uuid
 
@@ -42,8 +43,22 @@ def get_users():
 def ban_user(user_id):
     """Заблокировать пользователя (только админ)"""
     user = User.query.get_or_404(user_id)
+    data = request.get_json() or {}
+    reason = data.get('reason')
+
     user.is_banned = True
     db.session.commit()
+
+    # Логировать действие администратора
+    SuspiciousActivityTracker.log_security_event(
+        user_id,
+        'user_banned_by_admin',
+        description=f'User banned by admin',
+        details={'reason': reason} if reason else None
+    )
+
+    log_moderation_action(request.current_user.id, user_id, 'ban', reason=reason)
+
     return jsonify({'message': 'Пользователь заблокирован'}), 200
 
 @admin_bp.route('/users/<user_id>/unban', methods=['POST'])
@@ -53,6 +68,14 @@ def unban_user(user_id):
     user = User.query.get_or_404(user_id)
     user.is_banned = False
     db.session.commit()
+    
+    # Логировать действие администратора
+    SuspiciousActivityTracker.log_security_event(
+        user_id,
+        'user_unbanned_by_admin',
+        description=f'User unbanned by admin'
+    )
+    
     return jsonify({'message': 'Пользователь разблокирован'}), 200
 
 @admin_bp.route('/users/<user_id>/make-admin', methods=['POST'])
@@ -274,10 +297,19 @@ def mute_user(user_id):
     user = User.query.get_or_404(user_id)
     data = request.get_json()
     hours = data.get('hours', 24)  # По умолчанию 24 часа
+    reason = data.get('reason', None)
     
     user.is_muted = True
     user.muted_until = datetime.utcnow() + timedelta(hours=hours)
     db.session.commit()
+    log_moderation_action(
+        request.current_user.id,
+        user_id,
+        'mute',
+        reason=reason,
+        details={'hours': hours, 'muted_until': user.muted_until.isoformat()}
+    )
+
     return jsonify({'message': f'Пользователь отключен на {hours} часов', 'muted_until': user.muted_until.isoformat()}), 200
 
 @admin_bp.route('/users/<user_id>/unmute', methods=['POST'])
@@ -409,6 +441,98 @@ def test_miku_comment():
         }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@admin_bp.route('/users/<user_id>/premium', methods=['POST'])
+@admin_required
+def set_premium(user_id):
+    """Установить или удалить премиум статус пользователю"""
+    user = User.query.get_or_404(user_id)
+    data = request.get_json() or {}
+    tag = data.get('tag')
+    
+    if tag:
+        # Validate tag: must be 3 characters
+        if len(str(tag)) != 3:
+            return jsonify({'error': 'Премиум тег должен содержать ровно 3 буквы'}), 400
+        user.premium_tag = str(tag).upper()
+    else:
+        user.premium_tag = None
+    
+    db.session.commit()
+    return jsonify({
+        'message': f'Премиум статус обновлен',
+        'premium_tag': user.premium_tag
+    }), 200
+
+
+@admin_bp.route('/users/<user_id>/badge/award', methods=['POST'])
+@admin_required
+def award_badge(user_id):
+    """Выдать бейдж пользователю (только админ)"""
+    from app.models.badge import Badge, UserBadge
+    
+    user = User.query.get_or_404(user_id)
+    data = request.get_json() or {}
+    badge_id = data.get('badge_id')
+    
+    if not badge_id:
+        return jsonify({'error': 'Требуется badge_id'}), 400
+    
+    badge = Badge.query.get_or_404(badge_id)
+    
+    # Check if user already has this badge
+    existing = UserBadge.query.filter_by(user_id=user_id, badge_id=badge_id).first()
+    if existing:
+        return jsonify({'error': 'Пользователь уже имеет этот бейдж'}), 400
+    
+    user_badge = UserBadge(
+        id=str(uuid.uuid4()),
+        user_id=user_id,
+        badge_id=badge_id,
+        awarded_by=request.current_user.id
+    )
+    db.session.add(user_badge)
+    db.session.commit()
+    
+    log_moderation_action(request.current_user.id, user_id, 'award_badge', 
+                         details=f'Badge: {badge.name}')
+    
+    return jsonify({
+        'message': 'Бейдж выдан',
+        'user': user.to_dict()
+    }), 200
+
+
+@admin_bp.route('/users/<user_id>/badge/<badge_id>', methods=['DELETE'])
+@admin_required
+def remove_badge(user_id, badge_id):
+    """Удалить бейдж у пользователя (только админ)"""
+    from app.models.badge import UserBadge
+    
+    user_badge = UserBadge.query.filter_by(user_id=user_id, badge_id=badge_id).first_or_404()
+    
+    db.session.delete(user_badge)
+    db.session.commit()
+    
+    user = User.query.get(user_id)
+    log_moderation_action(request.current_user.id, user_id, 'remove_badge', 
+                         details=f'Badge ID: {badge_id}')
+    
+    return jsonify({
+        'message': 'Бейдж удален',
+        'user': user.to_dict()
+    }), 200
+
+
+@admin_bp.route('/badges', methods=['GET'])
+@admin_required
+def get_badges():
+    """Получить список всех доступных бейджей (только админ)"""
+    from app.models.badge import Badge
+    
+    badges = Badge.query.all()
+    return jsonify([badge.to_dict() for badge in badges]), 200
 
 
 @admin_bp.route('/miku-moderate-posts', methods=['POST'])

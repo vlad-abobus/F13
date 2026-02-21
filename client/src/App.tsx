@@ -22,7 +22,11 @@ import Documentation from './pages/Documentation'
 import About from './pages/About'
 import Tech from './pages/Tech'
 import Donations from './pages/Donations'
-import Reports from './pages/Reports'
+import Feedback from './pages/Feedback'
+import SelfBan from './pages/SelfBan'
+import IPBan from './pages/IPBan'
+import ConfirmVoluntaryBan from './pages/ConfirmVoluntaryBan'
+
 import { ToastContainer } from './utils/toast'
 
 // Loading fallback component for Suspense
@@ -63,15 +67,13 @@ function App() {
                 <Route path="/documentation" element={<Documentation />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/tech" element={<Tech />} />
+                <Route path="/confirm-ban" element={<ConfirmVoluntaryBan />} />
+                <Route path="/self-ban" element={<SelfBan />} />
+                <Route path="/ip-ban" element={<IPBan />} />
+                <Route path="/self-ban" element={<SelfBan />} />
+                <Route path="/ip-ban" element={<IPBan />} />
                 <Route path="/donations" element={<Donations />} />
-                <Route
-                  path="/reports"
-                  element={
-                    <ProtectedRoute>
-                      <Reports />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/feedback" element={<Feedback />} />
                 <Route
                   path="/profile/:username"
                   element={

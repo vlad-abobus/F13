@@ -4,6 +4,9 @@ echo Freedom13 - Збірка для Production
 echo ========================================
 echo.
 
+REM Activate venv
+call venv\Scripts\activate.bat
+
 echo [1/2] Збірка React Frontend...
 cd client
 call npm run build

@@ -6,6 +6,8 @@ from app import db
 from app.models.user import User
 from app.models.post import Post
 from app.middleware.auth import token_required
+from app.middleware.security_manager import SuspiciousActivityTracker
+from app.middleware.sql_injection_protection import validate_request
 from app.utils.password import hash_password
 import uuid
 
@@ -84,6 +86,13 @@ def update_profile():
         user.avatar_url = data['avatar_url']
     
     db.session.commit()
+    
+    # Логировать обновление профиля
+    SuspiciousActivityTracker.log_security_event(
+        user.id,
+        'profile_updated',
+        description='User updated their profile'
+    )
     
     return jsonify(user.to_dict()), 200
 

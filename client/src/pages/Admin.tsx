@@ -2,7 +2,6 @@ import { Suspense, lazy, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '../api/client'
 import { useAuthStore } from '../store/authStore'
-import HtmlPageEditor from './HtmlPageEditor'
 
 // Lazy load admin tab components
 const MainTab = lazy(() => import('./admin/MainTab'))
@@ -11,8 +10,9 @@ const PostsTab = lazy(() => import('./admin/PostsTab'))
 const IPBansTab = lazy(() => import('./admin/IPBansTab'))
 const StatsTab = lazy(() => import('./admin/StatsTab'))
 const MikuTab = lazy(() => import('./admin/MikuTab'))
+const FeedbackTab = lazy(() => import('./admin/FeedbackTab'))
 
-type TabType = 'main' | 'users' | 'posts' | 'ip-bans' | 'stats' | 'miku' | 'pages'
+type TabType = 'main' | 'users' | 'posts' | 'ip-bans' | 'stats' | 'miku' | 'feedback'
 
 // Loading fallback for lazy components
 const TabLoadingFallback = () => (
@@ -81,10 +81,22 @@ export default function Admin() {
     enabled: activeTab === 'miku',
   })
 
+  const { data: feedbacks } = useQuery({
+    queryKey: ['admin-feedbacks'],
+    queryFn: async () => {
+      const response = await apiClient.get('/api/feedback')
+      return response.data
+    },
+    enabled: activeTab === 'feedback',
+  })
+
   // Mutations
   const banUserMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      return apiClient.post(`/admin/users/${userId}/ban`)
+    mutationFn: async (payload: { userId: string; reason?: string } | string) => {
+      if (typeof payload === 'string') {
+        return apiClient.post(`/admin/users/${payload}/ban`)
+      }
+      return apiClient.post(`/admin/users/${payload.userId}/ban`, { reason: payload.reason })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] })
@@ -103,8 +115,8 @@ export default function Admin() {
   })
 
   const muteUserMutation = useMutation({
-    mutationFn: async ({ userId, hours }: { userId: string; hours: number }) => {
-      return apiClient.post(`/admin/users/${userId}/mute`, { hours })
+    mutationFn: async ({ userId, hours, reason }: { userId: string; hours: number; reason?: string }) => {
+      return apiClient.post(`/admin/users/${userId}/mute`, { hours, reason })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] })
@@ -237,80 +249,114 @@ export default function Admin() {
     },
   })
 
-  return (
-    <div className="max-w-6xl mx-auto px-4">
-      <div className="border-2 border-white bg-black rounded-xl mb-6 p-6">
-        <h1 className="text-4xl font-bold mb-2">⚙️ Админ-панель</h1>
-        <p className="text-gray-400">Управление системой и модерация</p>
-      </div>
+  const deleteFeedbackMutation = useMutation({
+    mutationFn: async (feedbackId: string) => {
+      return apiClient.delete(`/api/feedback/${feedbackId}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-feedbacks'] })
+    },
+  })
 
-      {/* Tabs */}
-      <div className="mb-6 border-2 border-white bg-black rounded-xl overflow-hidden">
-        <div className="flex flex-wrap gap-2 p-2">
-          {(['main', 'users', 'posts', 'ip-bans', 'stats', 'miku', 'pages'] as TabType[]).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 font-bold rounded-lg transition-colors ${
-                activeTab === tab
-                  ? 'bg-white text-black'
-                  : 'bg-black text-white hover:bg-gray-900'
-              }`}
-            >
-              {tab === 'main' && '📊 Главная'}
-              {tab === 'users' && '👥 Пользователи'}
-              {tab === 'posts' && '📝 Посты'}
-              {tab === 'ip-bans' && '🚫 IP Баны'}
-              {tab === 'stats' && '📈 Статистика'}
-              {tab === 'miku' && '🎵 Miku Авто'}
-              {tab === 'pages' && '📄 HTML страницы'}
-            </button>
-          ))}
+  const setPremiumMutation = useMutation({
+    mutationFn: async ({ userId, tag }: { userId: string; tag: string | null }) => {
+      return apiClient.post(`/admin/users/${userId}/premium`, { tag })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+    },
+  })
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-black to-gray-950">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-900/30 via-purple-900/30 to-blue-900/30 border-b border-purple-500/30 sticky top-20 z-40">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="text-5xl">⚙️</div>
+            <div>
+              <h1 className="text-4xl font-bold text-white">Панель адміністратора</h1>
+              <p className="text-gray-400 text-sm">Управління системою та модерація контенту</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Tab Content with Suspense */}
-      <Suspense fallback={<TabLoadingFallback />}>
-        {activeTab === 'main' && <MainTab stats={stats} />}
-        {activeTab === 'users' && (
-          <UsersTab
-            users={users}
-            banUserMutation={banUserMutation}
-            unbanUserMutation={unbanUserMutation}
-            muteUserMutation={muteUserMutation}
-            unmuteUserMutation={unmuteUserMutation}
-            makeAdminMutation={makeAdminMutation}
-            removeAdminMutation={removeAdminMutation}
-            warnUserMutation={warnUserMutation}
-            kickUserMutation={kickUserMutation}
-            restrictPostingMutation={restrictPostingMutation}
-            allowPostingMutation={allowPostingMutation}
-          />
-        )}
-        {activeTab === 'posts' && (
-          <PostsTab
-            posts={posts}
-            approvePostMutation={approvePostMutation}
-            rejectPostMutation={rejectPostMutation}
-          />
-        )}
-        {activeTab === 'ip-bans' && (
-          <IPBansTab
-            ipBans={ipBans}
-            createIPBanMutation={createIPBanMutation}
-            removeIPBanMutation={removeIPBanMutation}
-          />
-        )}
-        {activeTab === 'stats' && <StatsTab stats={stats} />}
-        {activeTab === 'miku' && (
-          <MikuTab
-            mikuSettings={mikuSettings}
-            updateMikuSettingsMutation={updateMikuSettingsMutation}
-            testMikuCommentMutation={testMikuCommentMutation}
-          />
-        )}
-        {activeTab === 'pages' && <HtmlPageEditor />}
-      </Suspense>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Tabs Navigation */}
+        <div className="mb-8 bg-gray-900/50 border border-gray-800 rounded-2xl overflow-hidden backdrop-blur">
+          <div className="flex flex-wrap gap-1 p-3">
+            {(['main', 'users', 'posts', 'ip-bans', 'stats', 'miku', 'feedback'] as TabType[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-5 py-2.5 font-semibold rounded-xl transition-all ${
+                  activeTab === tab
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50 hover:text-white'
+                }`}
+              >
+                {tab === 'main' && '📊 Главная'}
+                {tab === 'users' && '👥 Пользователи'}
+                {tab === 'posts' && '📝 Посты'}
+                {tab === 'ip-bans' && '🚫 IP Баны'}
+                {tab === 'stats' && '📈 Статистика'}
+                {tab === 'miku' && '🎵 Miku Авто'}
+                {tab === 'feedback' && '💬 Отчеты'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tab Content with Suspense */}
+        <Suspense fallback={<TabLoadingFallback />}>
+          {activeTab === 'main' && <MainTab stats={stats} />}
+          {activeTab === 'users' && (
+            <UsersTab
+              users={users}
+              banUserMutation={banUserMutation}
+              unbanUserMutation={unbanUserMutation}
+              muteUserMutation={muteUserMutation}
+              unmuteUserMutation={unmuteUserMutation}
+              makeAdminMutation={makeAdminMutation}
+              removeAdminMutation={removeAdminMutation}
+              warnUserMutation={warnUserMutation}
+              kickUserMutation={kickUserMutation}
+              restrictPostingMutation={restrictPostingMutation}
+              allowPostingMutation={allowPostingMutation}
+              setPremiumMutation={setPremiumMutation}
+            />
+          )}
+          {activeTab === 'posts' && (
+            <PostsTab
+              posts={posts}
+              approvePostMutation={approvePostMutation}
+              rejectPostMutation={rejectPostMutation}
+            />
+          )}
+          {activeTab === 'ip-bans' && (
+            <IPBansTab
+              ipBans={ipBans}
+              createIPBanMutation={createIPBanMutation}
+              removeIPBanMutation={removeIPBanMutation}
+            />
+          )}
+          {activeTab === 'stats' && <StatsTab stats={stats} />}
+          {activeTab === 'miku' && (
+            <MikuTab
+              mikuSettings={mikuSettings}
+              updateMikuSettingsMutation={updateMikuSettingsMutation}
+              testMikuCommentMutation={testMikuCommentMutation}
+            />
+          )}
+          {activeTab === 'feedback' && (
+            <FeedbackTab
+              feedbacks={feedbacks}
+              deleteFeedbackMutation={deleteFeedbackMutation}
+            />
+          )}
+        </Suspense>
+      </div>
     </div>
   )
 }

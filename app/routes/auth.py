@@ -7,6 +7,9 @@ from app.models.user import User
 from app.utils.password import hash_password, verify_password
 from app.utils.jwt import generate_tokens
 from app.middleware.captcha import verify_captcha
+from app.middleware.bot_detection import detect_bot
+from app.middleware.spam_detector import check_spam
+from app.middleware.security_manager import SuspiciousActivityTracker
 from flask_jwt_extended import create_refresh_token, get_jwt_identity, jwt_required
 import uuid
 import time
@@ -16,6 +19,7 @@ auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/register', methods=['POST'])
 @limiter.limit("5 per minute")  # Ограничение частоты регистрации для предотвращения злоупотреблений
+@detect_bot
 @verify_captcha
 def register():
     """Регистрация пользователя"""
@@ -48,6 +52,13 @@ def register():
         
         db.session.add(user)
         db.session.commit()
+        
+        # Логировать новую регистрацию
+        SuspiciousActivityTracker.log_security_event(
+            user.id,
+            'user_registered',
+            description=f'New user registered from IP {request.remote_addr}'
+        )
 
         access_token, refresh_token = generate_tokens(user.id)
 
@@ -62,6 +73,7 @@ def register():
 
 @auth_bp.route('/login', methods=['POST'])
 @limiter.limit("10 per minute")  # Ограничение попыток входа на IP
+@detect_bot
 @verify_captcha
 def login():
     """Вход пользователя"""
@@ -78,12 +90,21 @@ def login():
         user = User.query.filter_by(username=username).first()
 
         if not user or not verify_password(password, user.password_hash):
+            # Логировать неудачную попытку входа
+            SuspiciousActivityTracker.log_failed_login(username)
             return jsonify({'error': 'Неверные учетные данные'}), 401
         
         if user.is_banned:
             return jsonify({'error': 'Учетная запись заблокирована'}), 403
 
         access_token, refresh_token = generate_tokens(user.id)
+        
+        # Логировать успешный вход
+        SuspiciousActivityTracker.log_security_event(
+            user.id,
+            'successful_login',
+            description=f'User logged in from IP {request.remote_addr}'
+        )
 
         return jsonify({
             'user': user.to_dict(),

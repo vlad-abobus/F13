@@ -1,7 +1,7 @@
 # Complete Spam Protection System Documentation
 
 ## Overview
-This document describes the comprehensive spam protection system implemented to prevent abuse on Freedom13. It includes multiple layers of protection:
+This document describes the comprehensive spam protection system implemented to prevent abuse on F13. It includes multiple layers of protection:
 
 1. **Time-based Cooldowns** - Prevent rapid-fire posts/comments
 2. **Content Analysis** - Detect spam keywords and suspicious patterns

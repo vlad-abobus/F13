@@ -1,9 +1,12 @@
-import { ReactNode } from 'react'
+import { ReactNode, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import apiClient from '../api/client'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import SafeImage from './SafeImage'
 import OtherMenu from './OtherMenu'
 import TestBanner from './TestBanner'
+import EntranceWarning from './EntranceWarning'
 
 interface LayoutProps {
   children: ReactNode
@@ -11,16 +14,40 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const { user, isAuthenticated } = useAuthStore()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    let cancelled = false
+    async function checkBan() {
+      try {
+        const res = await apiClient.get('/ip-ban-info')
+        if (cancelled) return
+        if (res.data?.banned) {
+          navigate('/ip-ban')
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    checkBan()
+    return () => { cancelled = true }
+  }, [navigate])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-black to-gray-950 text-white">
+      <EntranceWarning />
       <header className="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-700 shadow-lg">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link
             to="/"
-            className="text-2xl font-extrabold tracking-tight text-white hover:text-gray-300 transition-colors"
+            className="hover:text-gray-300 transition-colors"
           >
-            F13
+            <SafeImage 
+              src="/logo.png" 
+              alt="Freedom13" 
+              className="h-12 w-auto"
+              loading="eager"
+            />
           </Link>
 
           <nav className="flex items-center gap-6 flex-wrap">
@@ -41,16 +68,20 @@ export default function Layout({ children }: LayoutProps) {
               Галерея
             </Link>
 
-            <Link to="/reports" className="hover:text-gray-300 transition-colors font-medium text-lg">
-              Репорти
-            </Link>
-
             <Link to="/miku" className="hover:text-gray-300 transition-colors font-medium text-lg">
               MikuGPT
             </Link>
 
             <Link to="/flash" className="hover:text-gray-300 transition-colors font-medium text-lg">
               Игры
+            </Link>
+
+            <Link 
+              to="/feedback" 
+              className="px-3 py-1.5 bg-red-600/20 hover:bg-red-600/40 border border-red-500/50 hover:border-red-500 rounded-md transition-all text-sm text-red-300 hover:text-red-200 flex items-center gap-1"
+              title="Сообщить о баге или предложить функцию"
+            >
+              🐛 Баг
             </Link>
 
             <OtherMenu />
@@ -72,7 +103,7 @@ export default function Layout({ children }: LayoutProps) {
             className="h-12 mx-auto mb-4"
             loading="eager"
           />
-          <p className="text-sm text-gray-400">Freedom13 © 2024</p>
+          <p className="text-sm text-gray-400">Freedom13 © 2026</p>
           <div className="mt-4 flex justify-center gap-4 text-sm">
             <Link to="/about" className="text-gray-400 hover:text-white transition-colors">О сайте</Link>
             <Link to="/documentation" className="text-gray-400 hover:text-white transition-colors">Документация</Link>

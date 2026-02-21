@@ -1,9 +1,10 @@
 import { format } from 'date-fns'
 import { Link } from 'react-router-dom'
-import VerificationBadge from './VerificationBadge'
+import UserLabel from './UserLabel'
 import CommentSection from './CommentSection'
 import SafeImage from './SafeImage'
 import { useState } from 'react'
+import ReportForm from './ReportForm'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '../api/client'
 import { useAuthStore } from '../store/authStore'
@@ -35,10 +36,25 @@ interface PostCardProps {
 export default function PostCard({ post }: PostCardProps) {
   const [showComments, setShowComments] = useState(false)
   const [showNsfwContent, setShowNsfwContent] = useState(false)
-  const { user } = useAuthStore()
+  const [userLiked, setUserLiked] = useState(false)
+  const { user, isAuthenticated } = useAuthStore()
   const queryClient = useQueryClient()
   const isAdmin = user?.status === 'admin'
   const isAuthor = user?.id === post.author?.id
+
+  const likeMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      return apiClient.post(`/posts/${postId}/like`)
+    },
+    onSuccess: () => {
+      setUserLiked(!userLiked)
+      queryClient.invalidateQueries({ queryKey: ['posts'] })
+      queryClient.invalidateQueries({ queryKey: ['user-posts'] })
+    },
+    onError: () => {
+      showToast('Ошибка при лайке', 'error')
+    },
+  })
 
   const deletePostMutation = useMutation({
     mutationFn: async (postId: string) => {
@@ -53,6 +69,8 @@ export default function PostCard({ post }: PostCardProps) {
       showToast('Ошибка при удалении поста', 'error')
     },
   })
+
+  const [showReportForm, setShowReportForm] = useState(false)
 
   return (
     <article className="bg-gradient-to-br from-gray-900 via-gray-800 to-black border border-gray-700 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:border-gray-600 transition-all">
@@ -76,11 +94,7 @@ export default function PostCard({ post }: PostCardProps) {
               />
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-white group-hover:text-gray-300 transition-colors">{post.author.username}</span>
-                  <VerificationBadge
-                    type={post.author.verification_type || 'none'}
-                    badge={post.author.verification_badge}
-                  />
+                  <UserLabel user={post.author} />
                 </div>
                 <div className="text-xs text-gray-500">
                   {format(new Date(post.created_at), 'd MMM yyyy, HH:mm')}
@@ -98,7 +112,7 @@ export default function PostCard({ post }: PostCardProps) {
                 className="px-3 py-1.5 text-gray-300 hover:text-gray-200 hover:bg-gray-700/50 rounded-lg font-semibold disabled:opacity-50 transition-all"
                 title={isAdmin ? 'Удалить пост (админ)' : 'Удалить пост'}
               >
-                {deletePostMutation.isPending ? '...' : '🗑️'}
+                {deletePostMutation.isPending ? '...' : <img src="/icons/icons8-удалить-50.png" alt="Delete" className="w-5 h-5" />}
               </button>
             )}
           </div>
@@ -114,7 +128,7 @@ export default function PostCard({ post }: PostCardProps) {
               <div className="flex-1">
                 <p className="font-semibold mb-1">NSFW контент</p>
                 <p className="text-sm text-gray-200/80">
-                  Эта запись отмечена как NSFW. Контент скрыт. Нажмите, чтобы показать на собственный риск.
+                  NSFW: Нажмите для просмотра
                 </p>
               </div>
               <button
@@ -129,7 +143,7 @@ export default function PostCard({ post }: PostCardProps) {
             {post.image_url && (
               <div className="rounded-xl overflow-hidden border border-gray-700 bg-black flex items-center justify-center h-64">
                 <span className="text-sm text-gray-400 text-center px-4">
-                  Изображение скрыто для NSFW-поста. Нажмите &quot;Показать&quot;, чтобы просмотреть.
+                  NSFW изображение
                 </span>
               </div>
             )}
@@ -174,8 +188,12 @@ export default function PostCard({ post }: PostCardProps) {
 
         {/* Actions */}
         <div className="flex items-center gap-6 pt-4 border-t border-gray-700">
-          <button className="flex items-center gap-2 hover:text-gray-300 transition-colors group">
-            <span className="text-xl group-hover:scale-110 transition-transform">❤️</span>
+          <button 
+            onClick={() => likeMutation.mutate(post.id)}
+            disabled={!isAuthenticated || likeMutation.isPending}
+            className="flex items-center gap-2 hover:text-gray-300 transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className="text-xl group-hover:scale-110 transition-transform cursor-pointer">🥴</span>
             <span className="font-semibold text-gray-300">{post.likes_count}</span>
           </button>
           <button
@@ -207,11 +225,24 @@ export default function PostCard({ post }: PostCardProps) {
                 className="px-3 py-1.5 text-gray-300 hover:text-gray-200 hover:bg-gray-700/50 rounded-lg font-semibold disabled:opacity-50 transition-all"
                 title="Удалить пост (админ)"
               >
-                {deletePostMutation.isPending ? '...' : '🗑️'}
+                {deletePostMutation.isPending ? '...' : <img src="/icons/icons8-удалить-50.png" alt="Delete" className="w-5 h-5" />}
               </button>
             )}
+            {/* Report button */}
+            <button
+              onClick={() => setShowReportForm(!showReportForm)}
+              className="px-3 py-1.5 text-gray-300 hover:text-gray-200 hover:bg-gray-700/50 rounded-lg font-semibold transition-all"
+              title="Пожаловаться"
+            >
+              R
+            </button>
           </div>
         </div>
+        {showReportForm && (
+          <div className="mt-2">
+            <ReportForm targetType="post" targetId={post.id} onClose={() => setShowReportForm(false)} onReported={() => { setShowReportForm(false) }} />
+          </div>
+        )}
       </div>
 
       {/* Moderation Warning */}

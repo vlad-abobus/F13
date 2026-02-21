@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import apiClient from '../api/client'
 import SafeImage from './SafeImage'
+import { protectElement } from '../utils/copyProtection'
 
 interface CaptchaProps {
   onVerify: (token: string, answer: string) => void
@@ -11,6 +12,7 @@ export default function Captcha({ onVerify, onError }: CaptchaProps) {
   const [captchaData, setCaptchaData] = useState<{ token: string; image_url: string } | null>(null)
   const [answer, setAnswer] = useState('')
   const [loading, setLoading] = useState(false)
+  const captchaRef = useRef<HTMLDivElement>(null)
 
   const loadCaptcha = async () => {
     try {
@@ -29,6 +31,20 @@ export default function Captcha({ onVerify, onError }: CaptchaProps) {
     loadCaptcha()
   }, [])
 
+  // Применяем защиту от копирования при загрузке капчи
+  useEffect(() => {
+    if (captchaRef.current && captchaData) {
+      const cleanup = protectElement(captchaRef.current, {
+        blockCopy: true,
+        blockSelect: true,
+        blockContextMenu: true,
+        blockDrag: true,
+        blockInspect: false // Инспектор на изображении разрешен
+      })
+      return cleanup
+    }
+  }, [captchaData])
+
   const handleSubmit = () => {
     if (!captchaData || !answer.trim()) {
       onError?.('Пожалуйста, введите ответ CAPTCHA')
@@ -42,12 +58,12 @@ export default function Captcha({ onVerify, onError }: CaptchaProps) {
   }
 
   return (
-    <div className="border-2 border-white p-4">
-      <div className="mb-4">
+    <div ref={captchaRef} className="border-2 border-white p-4">
+      <div className="mb-4 select-none">
         <SafeImage
           src={captchaData.image_url}
           alt="CAPTCHA"
-          className="border-2 border-white"
+          className="border-2 border-white pointer-events-auto"
           onError={() => onError?.(('Не удалось загрузить изображение CAPTCHA'))}
         />
       </div>
@@ -59,6 +75,8 @@ export default function Captcha({ onVerify, onError }: CaptchaProps) {
           className="flex-1 px-4 py-2 bg-black border-2 border-white text-white"
           placeholder="Введіть відповідь"
           onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
+          onContextMenu={(e) => e.preventDefault()}
+          onCopy={(e) => e.preventDefault()}
         />
         <button
           onClick={handleSubmit}

@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import apiClient from '../api/client'
+import { protectElement } from '../utils/copyProtection'
 
 interface SimpleCaptchaProps {
   onSolution: (solution: string, questionId: string) => void
@@ -19,10 +20,25 @@ export default function SimpleCaptcha({ onSolution, onError }: SimpleCaptchaProp
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [isVerified, setIsVerified] = useState(false)
+  const questionRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadQuestion()
   }, [])
+
+  // Применяем защиту от копирования к вопросу капчи
+  useEffect(() => {
+    if (questionRef.current && question) {
+      const cleanup = protectElement(questionRef.current, {
+        blockCopy: true,
+        blockSelect: true,
+        blockContextMenu: true,
+        blockDrag: true,
+        blockInspect: false
+      })
+      return cleanup
+    }
+  }, [question])
 
   const loadQuestion = async () => {
     try {
@@ -106,55 +122,71 @@ export default function SimpleCaptcha({ onSolution, onError }: SimpleCaptchaProp
   if (!question) return null
 
   return (
-    <div className="my-4 p-4 border-2 border-white bg-black">
-      <div className="mb-3">
-        <div className="text-sm text-gray-400 mb-2">Капча</div>
-        <div className="text-lg font-bold">{question.question}</div>
-      </div>
-      
-      <div className="space-y-3">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={userAnswer}
-            onChange={(e) => setUserAnswer(e.target.value)}
-            placeholder="Введіть відповідь"
-            className="flex-1 px-3 py-2 bg-black border-2 border-white text-white focus:outline-none focus:border-gray-400"
-            autoComplete="off"
-            disabled={isVerified}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                e.stopPropagation()
-                handleVerify(e as any)
-              }
-            }}
-          />
-          <button
-            type="button"
-            onClick={handleVerify}
-            disabled={isVerified}
-            className="px-4 py-2 border-2 border-white hover:bg-white hover:text-black font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isVerified ? '✓ Перевірено' : 'Перевірити'}
-          </button>
+    <div className="my-3">
+      <div ref={questionRef} className="bg-gradient-to-r from-gray-800/40 to-gray-900/40 border border-gray-700 rounded-lg p-3 hover:border-gray-600 transition-colors select-none">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">🔒</span>
+            <div>
+              <div className="text-sm text-gray-400 mb-1">Капча</div>
+              <div 
+                className="text-base font-medium text-gray-200 line-clamp-2"
+                onCopy={(e) => e.preventDefault()}
+                onContextMenu={(e) => e.preventDefault()}
+                onMouseDown={(e) => e.preventDefault()}
+              >
+                {question.question}
+              </div>
+            </div>
+          </div>
         </div>
         
-        {error && (
-          <div className="text-gray-300 text-sm">{error}</div>
-        )}
-        
-        {isVerified && (
-          <div className="text-gray-200 text-sm">✓ Капча пройдена успішно!</div>
-        )}
-        
-        <button
-          type="button"
-          onClick={loadQuestion}
-          className="text-sm text-gray-400 hover:text-white underline"
-        >
-          Оновити питання
-        </button>
+        <div className="mt-3 space-y-2">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={userAnswer}
+              onChange={(e) => setUserAnswer(e.target.value)}
+              placeholder="Відповідь..."
+              className="flex-1 px-3 py-2 bg-gray-900/50 border border-gray-600 rounded text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-colors"
+              autoComplete="off"
+              disabled={isVerified}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  handleVerify(e as any)
+                }
+              }}
+              onContextMenu={(e) => e.preventDefault()}
+              onCopy={(e) => e.preventDefault()}
+            />
+            <button
+              type="button"
+              onClick={handleVerify}
+              disabled={isVerified}
+              className="px-3 py-2 bg-gray-700/60 hover:bg-gray-600 text-white text-sm font-medium rounded border border-gray-600 hover:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95"
+            >
+              {isVerified ? '✓' : 'OK'}
+            </button>
+          </div>
+          
+          {error && (
+            <div className="text-red-400 text-xs">{error}</div>
+          )}
+          
+          {isVerified && (
+            <div className="text-green-400 text-xs">✓ Верифіковано</div>
+          )}
+          
+          <button
+            type="button"
+            onClick={loadQuestion}
+            className="text-xs text-gray-500 hover:text-gray-400 underline"
+          >
+            Нове питання
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react'
+import { Component, ErrorInfo, ReactNode } from 'react'
 import { logger } from '../utils/logger'
 
 interface Props {
@@ -70,7 +70,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="text-6xl mb-4">⚠️</div>
             <h1 className="text-2xl font-bold mb-2">Что-то пошло не так</h1>
             <p className="text-gray-400 mb-6">
-              Произошла ошибка при загрузке страницы. Пожалуйста, попробуйте обновить страницу.
+              Ошибка загружки
             </p>
             {import.meta.env.DEV && this.state.error && (
               <details className="text-left mb-4 bg-gray-800 p-4 rounded border border-gray-700">

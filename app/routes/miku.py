@@ -210,9 +210,10 @@ def get_emotion_image(set, key):
         if set not in ['DEFAULT', 'A', 'B', None]:
             return jsonify({'error': 'Неверный набор эмоций'}), 400
         
-        # Получить базовый каталог
+        # Получить базовый каталог проекта и путь к папке с эмоциями в клиенте
         base_dir = Path(__file__).parent.parent.parent
-        emotions_dir = base_dir / 'miku_c'
+        # Эмоции теперь хранятся в client/public/miku_c
+        emotions_dir = base_dir / 'client' / 'public' / 'miku_c'
         
         # Логирование для отладки
         logger.debug(f'Trying to find emotion: set={set}, key={key}')
@@ -229,14 +230,20 @@ def get_emotion_image(set, key):
         # Проверить существует ли файл
         if file_path.exists() and file_path.is_file():
             logger.debug(f'Serving emotion image: {filename}')
-            return send_from_directory(str(emotions_dir), filename)
+            # Disable conditional responses and caching for emotion images to
+            # avoid 304 responses from interfering with frontend display
+            resp = send_from_directory(str(emotions_dir), filename, conditional=False)
+            resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+            return resp
         
         # Резервный: попробовать найти файл с похожим названием
         if emotions_dir.exists():
             for file in emotions_dir.iterdir():
                 if file.is_file() and key.lower().replace(' ', '_') in file.stem.lower():
                     logger.debug(f'Found similar file: {file.name}')
-                    return send_from_directory(str(emotions_dir), file.name)
+                    resp = send_from_directory(str(emotions_dir), file.name, conditional=False)
+                    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+                    return resp
         
         logger.warning(f'Emotion image not found: {filename}')
         return jsonify({'error': 'Изображение не найдено', 'set': set, 'key': key, 'filename': filename}), 404

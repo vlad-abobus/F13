@@ -1,4 +1,4 @@
-import { useState, ReactNode } from 'react'
+import { useState, useEffect, ReactNode } from 'react'
 
 interface SafeImageProps {
   src: string | null | undefined
@@ -9,6 +9,7 @@ interface SafeImageProps {
   onError?: (e: React.SyntheticEvent<HTMLImageElement>) => void
   loading?: 'lazy' | 'eager'
   decoding?: 'async' | 'auto' | 'sync'
+  background?: boolean // when true, render a div with background-image (preloaded)
   [key: string]: any // Allow other img props
 }
 
@@ -42,6 +43,46 @@ export default function SafeImage({
     return src
   })
   const [hasError, setHasError] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+
+  // Update imgSrc when `src` prop changes so images reload on emotion changes
+  useEffect(() => {
+    // If src is null, undefined, or empty string
+    if (!src || (typeof src === 'string' && src.trim() === '')) {
+      if (fallback && typeof fallback !== 'string') {
+        setImgSrc(null)
+        setHasError(false)
+        return
+      }
+      setImgSrc((typeof fallback === 'string' ? fallback : null) || placeholder)
+      setHasError(false)
+      return
+    }
+
+    // Otherwise, set to new src and reset error state
+    setImgSrc(src)
+    setHasError(false)
+    setLoaded(false)
+  }, [src, fallback, placeholder])
+
+  // Preload for background mode
+  useEffect(() => {
+    if (!imgSrc || typeof imgSrc !== 'string') return
+    if (!('background' in (props || {})) || !props.background) return
+
+    let cancelled = false
+    const img = new Image()
+    img.onload = () => {
+      if (!cancelled) setLoaded(true)
+    }
+    img.onerror = () => {
+      if (!cancelled) setHasError(true)
+    }
+    img.src = imgSrc
+    return () => {
+      cancelled = true
+    }
+  }, [imgSrc, props])
 
   const handleError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     // Prevent infinite loop if placeholder also fails
@@ -68,6 +109,23 @@ export default function SafeImage({
   // If fallback is a ReactNode and we have no src or error, render fallback
   if ((!imgSrc || hasError) && fallback && typeof fallback !== 'string') {
     return <>{fallback}</>
+  }
+
+  // If background mode requested, render a div with preloaded background-image
+  if (props.background) {
+    const bgStyle: any = loaded && imgSrc && !hasError ? { backgroundImage: `url(${imgSrc})` } : {}
+    const showFallbackNode = (!loaded || hasError) && fallback && typeof fallback !== 'string'
+    if (showFallbackNode) return <>{fallback}</>
+
+    return (
+      <div
+        className={`${className} bg-cover bg-center`}
+        style={bgStyle}
+        role="img"
+        aria-label={alt}
+        {...props}
+      />
+    )
   }
 
   // If we have a valid src, render image

@@ -105,7 +105,7 @@ export default function Register() {
 
           <div className="bg-gray-800/30 p-4 rounded-xl border border-gray-700">
             <label className="block mb-3 text-sm font-semibold text-gray-300">
-              🔒 CAPTCHA (защита от ботов)
+              <img src="/icons/icons8-замок-50.png" alt="Lock" className="w-4 h-4 inline mr-1" /> CAPTCHA
             </label>
             <SimpleCaptcha
               onSolution={(solution, questionId) => {

@@ -41,7 +41,7 @@ export default function Reports() {
       setCaptchaError(null)
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error || err?.message || 'Не удалось отправить жалобу'
+      const msg = err?.response?.data?.error || err?.message || 'Ошибка'
       showToast(msg, 'error')
     },
   })
@@ -50,7 +50,7 @@ export default function Reports() {
     return (
       <div className="max-w-xl mx-auto border-2 border-white bg-black p-6 rounded-xl">
         <h1 className="text-2xl font-bold mb-4">Жалобы и репорты</h1>
-        <p className="text-gray-400">Войдите в аккаунт, чтобы отправлять жалобы и репорты об ошибках.</p>
+        <p className="text-gray-400">Войдите, чтобы продолжить</p>
       </div>
     )
   }
@@ -67,8 +67,8 @@ export default function Reports() {
   return (
     <div className="max-w-2xl mx-auto px-4">
       <div className="border-2 border-white bg-black rounded-xl p-6 mb-6">
-        <h1 className="text-2xl font-bold mb-2">Жалоба / Репорт об ошибке</h1>
-        <p className="text-gray-400 text-sm">Опишите проблему или ошибку. Отправка требует прохождения CAPTCHA и наличия аккаунта.</p>
+        <h1 className="text-2xl font-bold mb-2">🚨 Репорт</h1>
+        <p className="text-gray-400 text-sm">Проблема</p>
       </div>
 
       <form onSubmit={handleSubmit} className="border-2 border-white bg-black rounded-xl p-6 space-y-4">
@@ -95,7 +95,7 @@ export default function Reports() {
         </div>
 
         <div>
-          <label className="block mb-1 text-sm font-semibold text-gray-200">Описание проблемы</label>
+          <label className="block mb-1 text-sm font-semibold text-gray-200">Проблема</label>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
@@ -128,7 +128,7 @@ export default function Reports() {
           disabled={mutation.isPending}
           className="w-full px-6 py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 disabled:opacity-50"
         >
-          {mutation.isPending ? 'Отправка...' : 'Отправить жалобу'}
+          {mutation.isPending ? 'Отправка...' : 'Отправить'}
         </button>
       </form>
     </div>
